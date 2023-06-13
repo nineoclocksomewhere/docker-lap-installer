@@ -55,6 +55,7 @@ apt-get update && apt-get install -y \
     git \
     vim \
     webp \
+    wget \
     mariadb-client \
     iputils-ping \
     zip

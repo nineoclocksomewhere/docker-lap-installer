@@ -2,8 +2,9 @@
 
 Docker LAP installer. When mounting this script with Docker's volumes
 you can use PHP's official Docker images (apache-debian) with the extra
-installations this script performs. This installer is mainly created to
-avoid rebuilding Docker images that could be large in size.
+installations this script performs. Make sure the script has the execute
+permission set. This installer is mainly created to avoid rebuilding
+Docker images that could be large in size.
 
 Remember that the first time you're starting the container it could take
 a while until fully booted. So be patient when you see your website still
@@ -53,3 +54,4 @@ Example:
 You can also add your own startup script and run that-one instead of the lap-installer script.
 Your script should download the lap-installer (with curl or wget) from this repo into for example the /tmp folder.
 Then run that script when successfully downloaded.
+An example of that script is added as src/lap-updater.sh.
