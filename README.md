@@ -2,16 +2,16 @@
 
 Docker LAP installer. When mounting this script with Docker's volumes
 you can use PHP's official Docker images (apache-debian) with the extra
-installionts this script performs. This installer is mainly created to
+installations this script performs. This installer is mainly created to
 avoid rebuilding Docker images that could be large in size.
 
 Remember that the first time you're starting the container it could take
 a while until fully booted. So be patient when you see your website still
 showing 'Bad Gateway' when refreshing. For the first time it's better to
 start your containers in a non-detached state so you can see the progress.
-To be sure you can end the containers with ctrl+C, wait and restart them in
-attached mode. An already up-to-date message should be shown and the server
-should be up in no time.
+To be sure you can end the containers when fully operational with ctrl+C,
+wait and restart them in attached mode. An already up-to-date message
+should be shown and the server should be up in no time.
 ```
 foo_web        | Installation is up-to-date (v1.0.10)
 ```
