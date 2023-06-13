@@ -47,3 +47,9 @@ Example:
         apache2-foreground
     restart: "unless-stopped"
 ```
+
+# Keeping installations up-to-date
+
+You can also add your own startup script and run that-one instead of the lap-installer script.
+Your script should download the lap-installer (with curl or wget) from this repo into for example the /tmp folder.
+Then run that script when successfully downloaded.
