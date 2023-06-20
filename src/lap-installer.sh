@@ -111,6 +111,7 @@ fi
 [[ "$DOCKER_INSTALL_PHP_SOAP" == "" ]] && export DOCKER_INSTALL_PHP_SOAP="no"; echo -e "DOCKER_INSTALL_PHP_SOAP=\033[036m${DOCKER_INSTALL_PHP_SOAP}\033[036m"
 if [[ "${DOCKER_INSTALL_PHP_SOAP,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'soap' | wc -l ) -eq 0 ]]; then
+        echo -e "\nInstalling PHP extension \033[036msoap\033[0m"
         docker-php-ext-install -j$(nproc) soap
     fi
 fi
