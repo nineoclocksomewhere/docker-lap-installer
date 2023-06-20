@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.10"
+V_SCRIPT_VERSION="1.0.11"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -48,6 +48,7 @@ apt-get update && apt-get install -y \
     libonig-dev \
     libpng-dev \
     libwebp-dev \
+    libxml2 \
     p7zip \
     sudo \
     ssh \
@@ -90,6 +91,9 @@ if [[ $( php -m | grep 'mysqli' | wc -l ) -eq 0 ]]; then
 fi
 if [[ $( php -m | grep 'exif' | wc -l ) -eq 0 ]]; then
     docker-php-ext-install -j$(nproc) exif
+fi
+if [[ $( php -m | grep 'soap' | wc -l ) -eq 0 ]]; then
+    docker-php-ext-install -j$(nproc) soap
 fi
 echo -e "\033[032mDone\033[0m"
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
