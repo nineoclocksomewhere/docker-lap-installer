@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.11"
+V_SCRIPT_VERSION="1.0.12"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -48,7 +48,7 @@ apt-get update && apt-get install -y \
     libonig-dev \
     libpng-dev \
     libwebp-dev \
-    libxml2 \
+    libxml2-dev \
     p7zip \
     sudo \
     ssh \
