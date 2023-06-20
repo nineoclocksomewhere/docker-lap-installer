@@ -92,8 +92,11 @@ fi
 if [[ $( php -m | grep 'exif' | wc -l ) -eq 0 ]]; then
     docker-php-ext-install -j$(nproc) exif
 fi
-if [[ $( php -m | grep 'soap' | wc -l ) -eq 0 ]]; then
-    docker-php-ext-install -j$(nproc) soap
+[[ "$DOCKER_INSTALL_PHP_SOAP" == "" ]] && export DOCKER_INSTALL_PHP_SOAP="no"; echo -e "DOCKER_INSTALL_PHP_SOAP=\033[036m${DOCKER_INSTALL_PHP_SOAP}\033[036m"
+if [[ "${DOCKER_INSTALL_PHP_SOAP,,}" =~ ^(y|yes|1|true)$ ]]; then
+    if [[ $( php -m | grep 'soap' | wc -l ) -eq 0 ]]; then
+        docker-php-ext-install -j$(nproc) soap
+    fi
 fi
 echo -e "\033[032mDone\033[0m"
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
