@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.13"
+V_SCRIPT_VERSION="1.0.14"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -190,20 +190,25 @@ if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
             # Prepare a composer installer directory
             mkdir /tmp/composer-installer && cd /tmp/composer-installer
             # https://getcomposer.org/download/
+            V_COMPOSER_HASH=$( curl https://composer.github.io/installer.sig )
             php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-            php -r "if (hash_file('sha384', 'composer-setup.php') === '55ce33d7678c5a611085589f1f3ddf8b3c52d662cd01d4ba75c0ee0459970c2200a51f492d557530c71c15d8dba01eae') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
-            php composer-setup.php
-            php -r "unlink('composer-setup.php');"
-            chmod +x composer.phar
-            mv composer.phar /usr/local/bin/composer > /dev/null 2>&1
-            # Cleanup
-            cd && rm -rf /tmp/composer-installer
+            php -r "if (hash_file('sha384', 'composer-setup.php') === '${V_COMPOSER_HASH}') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+            if [[ -f composer-setup.php ]]; then
+                php composer-setup.php
+                php -r "unlink('composer-setup.php');"
+                chmod +x composer.phar
+                mv composer.phar /usr/local/bin/composer > /dev/null 2>&1
+                # Cleanup
+                cd && rm -rf /tmp/composer-installer
+            else
+                echo -e "\033[031mError: installing composer failed, aborting\033[0m"; exit 1
+            fi
         fi
         which composer > /dev/null 2>&1
         if [[ $? -eq 0 ]]; then
             echo -e "\033[036mComposer\033[0m is now \033[032minstalled\033[0m!"
         else
-            echo -e "\033[031mError: installing composer failed, aborting\033[0m" && exit 1
+            echo -e "\033[031mError: installing composer failed, aborting\033[0m"; exit 1
         fi
     fi
 else
