@@ -110,7 +110,7 @@ if [[ "${DOCKER_INSTALL_PHP_EXIF,,}" =~ ^(y|yes|1|true)$ ]]; then
 fi
 [[ "$DOCKER_INSTALL_PHP_SOCKETS" == "" ]] && export DOCKER_INSTALL_PHP_SOCKETS="yes"; echo -e "DOCKER_INSTALL_PHP_SOCKETS=\033[036m${DOCKER_INSTALL_PHP_SOCKETS}\033[036m"
 if [[ "${DOCKER_INSTALL_PHP_SOCKETS,,}" =~ ^(y|yes|1|true)$ ]]; then
-    if [[ $( php -m | grep 'exif' | wc -l ) -eq 0 ]]; then
+    if [[ $( php -m | grep 'sockets' | wc -l ) -eq 0 ]]; then
         echo -e "\nInstalling PHP extension \033[036msockets\033[0m"
         docker-php-ext-install -j$(nproc) sockets
     fi
