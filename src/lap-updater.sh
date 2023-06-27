@@ -19,5 +19,6 @@ fi
 
 chmod +x /tmp/lap-installer.sh
 bash /tmp/lap-installer.sh
+rm /tmp/lap-installer.sh > /dev/null 2>&1
 
 exit 0
