@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.15"
+V_SCRIPT_VERSION="1.0.16"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -84,7 +84,7 @@ echo -e "Checking \033[036mPHP extensions\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_GD,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'gd' | wc -l ) -eq 0 ]]; then
         echo -e "\nInstalling PHP extension \033[036mgd\033[0m"
-        docker-php-ext-configure gd --with-freetype --with-jpeg && docker-php-ext-install -j$(nproc) gd
+        docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && docker-php-ext-install -j$(nproc) gd
     fi
 fi
 [[ "$DOCKER_INSTALL_PHP_PDO_MYSQL" == "" ]] && export DOCKER_INSTALL_PHP_PDO_MYSQL="yes"; echo -e "DOCKER_INSTALL_PHP_PDO_MYSQL=\033[036m${DOCKER_INSTALL_PHP_PDO_MYSQL}\033[036m"
