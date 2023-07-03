@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.19"
+V_SCRIPT_VERSION="1.0.20"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -60,6 +60,7 @@ apt-get update && apt-get install -y \
     mariadb-client \
     iputils-ping \
     htop \
+    libzip-dev \
     zip
 echo -e "\033[032mDone\033[0m"
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
