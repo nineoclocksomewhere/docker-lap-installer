@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.17"
+V_SCRIPT_VERSION="1.0.18"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -81,6 +81,9 @@ echo -e "\n\033[036m────────────────────
 
 # PHP extensions list: https:/127.0.0.1/github.com/mlocati/docker-php-extension-installer#supported-php-extensions
 echo -e "Checking \033[036mPHP extensions\033[0m"
+if [[ $( php -m | grep 'zip' | wc -l ) -eq 0 ]]; then
+    docker-php-ext-install -j$(nproc) zip
+fi
 [[ "$DOCKER_INSTALL_PHP_GD" == "" ]] && export DOCKER_INSTALL_PHP_GD="yes"; echo -e "DOCKER_INSTALL_PHP_GD=\033[036m${DOCKER_INSTALL_PHP_GD}\033[036m"
 if [[ "${DOCKER_INSTALL_PHP_GD,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'gd' | wc -l ) -eq 0 ]]; then
