@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.20"
+V_SCRIPT_VERSION="1.0.21"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -61,6 +61,7 @@ apt-get update && apt-get install -y \
     iputils-ping \
     htop \
     libzip-dev \
+    cron \
     zip
 echo -e "\033[032mDone\033[0m"
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
