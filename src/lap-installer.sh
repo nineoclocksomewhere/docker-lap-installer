@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.21"
+V_SCRIPT_VERSION="1.0.22"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -34,6 +34,36 @@ if [[ ! -f /usr/share/docker/lap-installer.version ]]; then
 else
     rm /usr/share/docker/lap-installer.version > /dev/null 2>&1
     echo -e "\033[033mInstallation outdated (current: \033[091m${V_CURRENT_VERSION}\033[033m, required: \033[092m${V_SCRIPT_VERSION}\033[033m), updating now\033[0m"
+fi
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+
+# User configuration - Part 1/2
+echo -e "Checking \033[036muser\033[0m configuration (Part 1/2)"
+V_GID="${PGID:-1000}"
+V_GROUP="${DOCKER_GROUP_NAME:-docker}"
+V_UID="${PUID:-1000}"
+V_USER="${DOCKER_USER_NAME:-docker}"
+V_SECRET="${DOCKER_USER_SECRET:-secret}"
+if [[ $( getent group $V_GROUP | wc -l ) -eq 0 ]]; then
+    echo -e "Creating group \033[036m${V_GROUP}\033[0m with GID \033[036m${V_GID}\033[0m"
+    groupadd -g $V_GID -o $V_GROUP
+else
+    echo -e "Group \033[036m${V_GROUP}\033[0m already exists"
+fi
+getent group $V_GROUP
+V_BASHRC_CREATED=0
+if id "$V_USER" &>/dev/null; then
+    echo -e "User \033[036m${V_USER}\033[0m already exists"
+    V_USER_CREATED=0
+else
+    echo -e "Creating user \033[036m${V_USER}\033[0m with UID \033[036m${V_UID}\033[0m"
+    useradd -u $V_UID -g $V_GROUP -s /bin/bash $V_USER
+    # Why not using the -m parameter above?
+    # -> The docker's home folder could already be created as mounted volume, so we check it later.
+    if [[ ! -d /home/$V_USER ]]; then mkdir -p /home/$V_USER; fi
+    chown $V_USER:$V_GROUP /home/$V_USER # Just to be sure, always
+    usermod -d /home/$V_USER $V_USER
+    V_USER_CREATED=1
 fi
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
@@ -154,31 +184,9 @@ fi
 echo -e "\033[032mDone\033[0m"
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
-# User configuration
-echo -e "Checking \033[036muser\033[0m configuration"
-V_GID="${PGID:-1000}"
-V_GROUP="${DOCKER_GROUP_NAME:-docker}"
-V_UID="${PUID:-1000}"
-V_USER="${DOCKER_USER_NAME:-docker}"
-V_SECRET="${DOCKER_USER_SECRET:-secret}"
-if [[ $( getent group $V_GROUP | wc -l ) -eq 0 ]]; then
-    echo -e "Creating group \033[036m${V_GROUP}\033[0m with GID \033[036m${V_GID}\033[0m"
-    groupadd -g $V_GID -o $V_GROUP
-else
-    echo -e "Group \033[036m${V_GROUP}\033[0m already exists"
-fi
-getent group $V_GROUP
-V_BASHRC_CREATED=0
-if id "$V_USER" &>/dev/null; then
-    echo -e "User \033[036m${V_USER}\033[0m already exists"
-else
-    echo -e "Creating user \033[036m${V_USER}\033[0m with UID \033[036m${V_UID}\033[0m"
-    useradd -u $V_UID -g $V_GROUP -s /bin/bash $V_USER
-    # Why not using the -m parameter above?
-    # -> The docker's home folder could already be created as mounted volume, so we check it later.
-    if [[ ! -d /home/$V_USER ]]; then mkdir -p /home/$V_USER; fi
-    chown $V_USER:$V_GROUP /home/$V_USER # Just to be sure, always
-    usermod -d /home/$V_USER $V_USER
+# User configuration - Part 2/2
+echo -e "Checking \033[036muser\033[0m configuration (Part 2/2)"
+if [[ $V_USER_CREATED -eq 1 ]]; then
     usermod -a -G sudo $V_USER
     usermod -a -G www-data $V_USER
     if [[ ! -f /home/$V_USER/.bashrc ]]; then
