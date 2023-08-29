@@ -300,6 +300,18 @@ else
 fi
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
+# NodeJS
+[[ "$DOCKER_INSTALL_PYTHON3" == "" ]] && export DOCKER_INSTALL_PYTHON3="yes"
+echo -e "DOCKER_INSTALL_PYTHON3=\033[036m${DOCKER_INSTALL_PYTHON3}\033[036m"
+if [[ "${DOCKER_INSTALL_PYTHON3,,}" =~ ^(y|yes|1|true)$ ]]; then
+    echo -e "Installing \033[036mPython3\033[0m"
+    apt-get install -y python3
+    python3 -V
+else
+    echo -e "\033[033mSkipping \033[036mPython3\033[033m install\033[0m"
+fi
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+
 # Laravel
 [[ "$DOCKER_INSTALL_LARAVEL" == "" ]] && export DOCKER_INSTALL_LARAVEL="no"
 echo -e "DOCKER_INSTALL_LARAVEL=\033[036m${DOCKER_INSTALL_LARAVEL}\033[036m"
