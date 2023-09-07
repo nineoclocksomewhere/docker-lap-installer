@@ -264,7 +264,7 @@ if [[ "${DOCKER_INSTALL_NODEJS,,}" =~ ^(y|yes|1|true)$ ]]; then
             if [[ \$( whoami ) == \"root\" ]]; then export HOME=\"/root\"; else export HOME=\"/home/\$( whoami )\"; fi; \
             echo -e \"I just made sure my home directory is \033[036m\$HOME\033[0m.\"; \
             if [[ -f ~/.bashrc && $( cat ~/.bashrc | grep 'export HOME=' | wc -l ) -eq 0 ]]; then echo \"export HOME=\\\"\$HOME\\\"\" >> ~/.bashrc; fi; \
-            export NODE_VERSION=\"18.12.1\"; \
+            export NODE_VERSION=\"18.17.1\"; \
             if [[ -f ~/.bashrc && $( cat ~/.bashrc | grep 'export NODE_VERSION=' | wc -l ) -eq 0 ]]; then echo \"export NODE_VERSION=\\\"\$NODE_VERSION\\\"\" >> ~/.bashrc; fi; \
             export NVM_DIR=\"\$HOME/.nvm\"; \
             export NODE_PATH=\"\$NVM_DIR/v\$NODE_VERSION/lib/node_modules\"; \
