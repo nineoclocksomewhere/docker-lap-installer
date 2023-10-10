@@ -91,8 +91,8 @@ apt-get update && apt-get install -y \
     iputils-ping \
     htop \
     libzip-dev \
-    zlibc \
-    zlib1g \
+    # zlibc \
+    # zlib1g \
     cron \
     zip \
     unzip \
@@ -133,7 +133,7 @@ if [[ $( php -m | grep 'memcached' | wc -l ) -eq 0 ]]; then
     echo -e "\nInstalling PHP extension \033[036mmemcached\033[0m"
     # ref: https://bobcares.com/blog/docker-php-ext-install-memcached/
     # ref: https://github.com/php-memcached-dev/php-memcached/issues/408
-    if [[ $V_V_PHP_MAJOR_VERSION -eq 7 ]]; then
+    if [[ $V_PHP_MAJOR_VERSION -eq 7 ]]; then
         set -ex \
             && apt-get update \
             && DEBIAN_FRONTEND=noninteractive apt-get install -y libmemcached-dev \
