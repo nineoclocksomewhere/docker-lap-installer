@@ -91,8 +91,13 @@ apt-get update && apt-get install -y \
     iputils-ping \
     htop \
     libzip-dev \
+    zlibc \
+    zlib1g \
     cron \
-    zip
+    zip \
+    unzip \
+    memcached \
+    libmemcached-dev
 echo -e "\033[032mDone\033[0m"
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
@@ -112,12 +117,35 @@ fi
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # PHP extensions list: https:/127.0.0.1/github.com/mlocati/docker-php-extension-installer#supported-php-extensions
+V_PHP_MAJOR_VERSION=$( php -r "echo explode('.', phpversion())[0];" )
+V_PHP_MAJOR_VERSION=$(( $V_PHP_MAJOR_VERSION * 1 ))
+echo -e "PHP major version: \033[036m${V_PHP_MAJOR_VERSION}\033[0m"
+echo
 echo -e "Checking \033[036mPHP extensions\033[0m"
 if [[ $( php -m | grep 'zip' | wc -l ) -eq 0 ]]; then
     echo -e "\nInstalling PHP extension \033[036mzip\033[0m"
+    docker-php-ext-configure zip --with-libzip
     docker-php-ext-install -j$(nproc) zip
 else
     echo -e "\nPHP extension \033[036mzip\033[0m already installed"
+fi
+if [[ $( php -m | grep 'memcached' | wc -l ) -eq 0 ]]; then
+    echo -e "\nInstalling PHP extension \033[036mmemcached\033[0m"
+    # ref: https://bobcares.com/blog/docker-php-ext-install-memcached/
+    # ref: https://github.com/php-memcached-dev/php-memcached/issues/408
+    if [[ $V_V_PHP_MAJOR_VERSION -eq 7 ]]; then
+        set -ex \
+            && apt-get update \
+            && DEBIAN_FRONTEND=noninteractive apt-get install -y libmemcached-dev \
+            && rm -rf /var/lib/apt/lists/* \
+            && MEMCACHED="`mktemp -d`" \
+            && curl -skL https://github.com/php-memcached-dev/php-memcached/archive/master.tar.gz | tar zxf - --strip-components 1 -C $MEMCACHED \
+            && docker-php-ext-configure $MEMCACHED \
+            && docker-php-ext-install $MEMCACHED \
+            && rm -rf $MEMCACHED
+    fi
+else
+    echo -e "\nPHP extension \033[036mmemcached\033[0m already installed"
 fi
 [[ "$DOCKER_INSTALL_PHP_GD" == "" ]] && export DOCKER_INSTALL_PHP_GD="yes"; echo -e "DOCKER_INSTALL_PHP_GD=\033[036m${DOCKER_INSTALL_PHP_GD}\033[036m"
 if [[ "${DOCKER_INSTALL_PHP_GD,,}" =~ ^(y|yes|1|true)$ ]]; then
