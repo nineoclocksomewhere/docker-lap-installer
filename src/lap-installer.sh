@@ -91,8 +91,7 @@ apt-get update && apt-get install -y \
     iputils-ping \
     htop \
     libzip-dev \
-    # zlibc \
-    # zlib1g \
+    zlib1g \
     cron \
     zip \
     unzip \
@@ -138,11 +137,11 @@ if [[ $( php -m | grep 'memcached' | wc -l ) -eq 0 ]]; then
             && apt-get update \
             && DEBIAN_FRONTEND=noninteractive apt-get install -y libmemcached-dev \
             && rm -rf /var/lib/apt/lists/* \
-            && MEMCACHED="`mktemp -d`" \
+            && MEMCACHED=/usr/src/php/ext/memcached \
+            && mkdir -p "$MEMCACHED" \
             && curl -skL https://github.com/php-memcached-dev/php-memcached/archive/master.tar.gz | tar zxf - --strip-components 1 -C $MEMCACHED \
             && docker-php-ext-configure $MEMCACHED \
-            && docker-php-ext-install $MEMCACHED \
-            && rm -rf $MEMCACHED
+            && docker-php-ext-install $MEMCACHED
     fi
 else
     echo -e "\nPHP extension \033[036mmemcached\033[0m already installed"
