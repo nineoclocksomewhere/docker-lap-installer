@@ -246,19 +246,22 @@ if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ -e /usr/local/bin/composer ]]; then
         echo -e "\033[032minstalled\033[0m"
     else
-        echo -e "\033[036mComposer\033[0m not installed, installing now"
+        echo -e "\033[036mnot installed\033[0m, installing now"
         # Prepare a composer installer directory
         mkdir /tmp/composer-installer && cd /tmp/composer-installer
         # https://getcomposer.org/download/
         V_COMPOSER_HASH=$( curl https://composer.github.io/installer.sig )
         php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-        php -r "if (hash_file('sha384', 'composer-setup.php') === '${V_COMPOSER_HASH}') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+        php -r "if (hash_file('sha384', 'composer-setup.php') === '${V_COMPOSER_HASH}') { echo 'Composer installer verified'; } else { echo 'Composer installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
         if [[ -f composer-setup.php ]]; then
+            echo -e "Running \033[036mcomposer-setup.php\033[0m"
             php composer-setup.php
+            echo -e "Removing \033[036mcomposer-setup.php\033[0m"
             php -r "unlink('composer-setup.php');"
             chmod +x composer.phar
             mv composer.phar /usr/local/bin/composer
             # Cleanup
+            echo -e "Cleaning up the composer installer"
             cd && rm -rf /tmp/composer-installer
         else
             echo -e "\033[031mError: installing composer failed, aborting\033[0m"; exit 1
