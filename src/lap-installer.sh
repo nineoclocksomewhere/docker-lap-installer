@@ -267,6 +267,7 @@ if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
         else
             echo -e "\033[031mError: installing composer failed, aborting\033[0m"; exit 1
         fi
+ls -la /usr/local/bin/
         if [[ -f /usr/local/bin/composer ]]; then
             echo -e "\033[036mComposer\033[0m is now \033[032minstalled\033[0m!"
         else
