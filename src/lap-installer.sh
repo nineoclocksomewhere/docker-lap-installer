@@ -243,34 +243,27 @@ echo -e "DOCKER_INSTALL_COMPOSER=\033[036m${DOCKER_INSTALL_COMPOSER}\033[036m"
 if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
     echo -e "Installing \033[036mComposer\033[0m"
     echo -n -e "Checking if \033[036mcomposer\033[0m is installed..."
-    which composer
-    V_INSTALLED=$?
-    echo "Installed: ${V_INSTALLED}"
-    if [[ $V_INSTALLED -eq 0 ]]; then
+    if [[ -e /usr/local/bin/composer ]]; then
         echo -e "\033[032minstalled\033[0m"
     else
-        echo
-        if [[ ! -e /usr/local/bin/composer ]]; then
-            echo -e "\033[036mComposer\033[0m not installed, installing now"
-            # Prepare a composer installer directory
-            mkdir /tmp/composer-installer && cd /tmp/composer-installer
-            # https://getcomposer.org/download/
-            V_COMPOSER_HASH=$( curl https://composer.github.io/installer.sig )
-            php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-            php -r "if (hash_file('sha384', 'composer-setup.php') === '${V_COMPOSER_HASH}') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
-            if [[ -f composer-setup.php ]]; then
-                php composer-setup.php
-                php -r "unlink('composer-setup.php');"
-                chmod +x composer.phar
-                mv composer.phar /usr/local/bin/composer > /dev/null 2>&1
-                # Cleanup
-                cd && rm -rf /tmp/composer-installer
-            else
-                echo -e "\033[031mError: installing composer failed, aborting\033[0m"; exit 1
-            fi
+        echo -e "\033[036mComposer\033[0m not installed, installing now"
+        # Prepare a composer installer directory
+        mkdir /tmp/composer-installer && cd /tmp/composer-installer
+        # https://getcomposer.org/download/
+        V_COMPOSER_HASH=$( curl https://composer.github.io/installer.sig )
+        php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+        php -r "if (hash_file('sha384', 'composer-setup.php') === '${V_COMPOSER_HASH}') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+        if [[ -f composer-setup.php ]]; then
+            php composer-setup.php
+            php -r "unlink('composer-setup.php');"
+            chmod +x composer.phar
+            mv composer.phar /usr/local/bin/composer
+            # Cleanup
+            cd && rm -rf /tmp/composer-installer
+        else
+            echo -e "\033[031mError: installing composer failed, aborting\033[0m"; exit 1
         fi
-        which composer > /dev/null 2>&1
-        if [[ $? -eq 0 ]]; then
+        if [[ ! -e /usr/local/bin/composer ]]; then
             echo -e "\033[036mComposer\033[0m is now \033[032minstalled\033[0m!"
         else
             echo -e "\033[031mError: installing composer failed, aborting\033[0m"; exit 1
