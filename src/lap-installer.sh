@@ -243,8 +243,10 @@ echo -e "DOCKER_INSTALL_COMPOSER=\033[036m${DOCKER_INSTALL_COMPOSER}\033[036m"
 if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
     echo -e "Installing \033[036mComposer\033[0m"
     echo -n -e "Checking if \033[036mcomposer\033[0m is installed..."
-    which composer > /dev/null 2>&1
-    if [[ $? -eq 0 ]]; then
+    which composer
+    V_INSTALLED=$?
+    echo "Installed: ${V_INSTALLED}"
+    if [[ $V_INSTALLED -eq 0 ]]; then
         echo -e "\033[032minstalled\033[0m"
     else
         echo
