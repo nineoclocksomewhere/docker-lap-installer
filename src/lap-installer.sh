@@ -259,7 +259,8 @@ if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
             echo -e "Removing \033[036mcomposer-setup.php\033[0m"
             php -r "unlink('composer-setup.php');"
             chmod +x composer.phar
-            mv composer.phar /usr/local/bin/composer
+            if [[ ! -d /usr/local/bin ]]; then mkdir -p /usr/local/bin; fi
+            mv -f composer.phar /usr/local/bin/composer
             # Cleanup
             echo -e "Cleaning up the composer installer"
             cd && rm -rf /tmp/composer-installer
