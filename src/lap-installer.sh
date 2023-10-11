@@ -243,7 +243,7 @@ echo -e "DOCKER_INSTALL_COMPOSER=\033[036m${DOCKER_INSTALL_COMPOSER}\033[036m"
 if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
     echo -e "Installing \033[036mComposer\033[0m"
     echo -n -e "Checking if \033[036mcomposer\033[0m is installed..."
-    if [[ -e /usr/local/bin/composer ]]; then
+    if [[ -f /usr/local/bin/composer ]]; then
         echo -e "\033[032minstalled\033[0m"
     else
         echo -e "\033[036mnot installed\033[0m, installing now"
@@ -267,7 +267,7 @@ if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
         else
             echo -e "\033[031mError: installing composer failed, aborting\033[0m"; exit 1
         fi
-        if [[ ! -e /usr/local/bin/composer ]]; then
+        if [[ -f /usr/local/bin/composer ]]; then
             echo -e "\033[036mComposer\033[0m is now \033[032minstalled\033[0m!"
         else
             echo -e "\033[031mError: installing composer failed, aborting\033[0m"; exit 1
