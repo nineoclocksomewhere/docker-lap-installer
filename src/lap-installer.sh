@@ -208,6 +208,9 @@ echo -e "Checking \033[036mapache mods\033[0m"
 if [[ ! -e /etc/apache2/mods-enabled/rewrite.load ]]; then
     a2enmod rewrite
 fi
+if [[ ! -e /etc/apache2/mods-enabled/headers.load ]]; then
+    a2enmod headers
+fi
 echo -e "\033[032mDone\033[0m"
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
