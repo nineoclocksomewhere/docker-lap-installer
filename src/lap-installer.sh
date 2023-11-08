@@ -157,7 +157,8 @@ if [[ "${DOCKER_INSTALL_PHP_GD,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'gd' | wc -l ) -eq 0 ]]; then
         echo -e "\nInstalling PHP extension \033[036mgd\033[0m"
         if [[ $V_PHP_MAJOR_VERSION -eq 7 && $V_PHP_MINOR_VERSION -le 3 ]]; then
-            docker-php-ext-configure gd && docker-php-ext-install -j$(nproc) gd
+            docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && docker-php-ext-install -j$(nproc) gd
+            # docker-php-ext-configure gd && docker-php-ext-install -j$(nproc) gd
         else
             docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && docker-php-ext-install -j$(nproc) gd
         fi
