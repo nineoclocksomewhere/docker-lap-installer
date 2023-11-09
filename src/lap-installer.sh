@@ -305,7 +305,8 @@ if [[ "${DOCKER_INSTALL_NODEJS,,}" =~ ^(y|yes|1|true)$ ]]; then
     V_NODE_USER="${V_USER}"
     if [[ $( su $V_NODE_USER -p -c "which npm" | wc -l ) -eq 0 && ! -d $HOME/.nvm ]]; then
         echo -e "\033[033mNo \033[036mModeJS\033[033m installed for user \033[036m${V_NODE_USER}\033[033m, installing now\033[0m"
-        su $V_NODE_USER -p -c "echo && \
+        su $V_NODE_USER -p -c "echo; \
+            echo -e \"While I am installing \033[036mnode\033[0m I am user \033[036m\$( whoami )\033[0m (\033[032m\$UID\033[0m).\"; \
             if [[ \$( whoami ) == \"root\" ]]; then export HOME=\"/root\"; else export HOME=\"/home/\$( whoami )\"; fi; \
             echo -e \"I just made sure my home directory is \033[036m\$HOME\033[0m.\"; \
             if [[ -f ~/.bashrc && $( cat ~/.bashrc | grep 'export HOME=' | wc -l ) -eq 0 ]]; then echo \"export HOME=\\\"\$HOME\\\"\" >> ~/.bashrc; fi; \
