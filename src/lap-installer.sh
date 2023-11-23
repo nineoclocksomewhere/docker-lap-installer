@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.28"
+V_SCRIPT_VERSION="1.0.29"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -98,6 +98,18 @@ apt-get update && apt-get install -y \
     memcached \
     libmemcached-dev
 echo -e "\033[032mDone\033[0m"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+
+# WKHTMLTOPDF
+[[ "$DOCKER_INSTALL_WKHTMLTOPDF" == "" ]] && export DOCKER_INSTALL_WKHTMLTOPDF="no"
+echo -e "DOCKER_INSTALL_WKHTMLTOPDF=\033[036m${DOCKER_INSTALL_WKHTMLTOPDF}\033[036m"
+if [[ "${DOCKER_INSTALL_WKHTMLTOPDF,,}" =~ ^(y|yes|1|true)$ ]]; then
+    echo -e "Installing \033[036mwkhtmltopdf\033[0m"
+    apt-get install -y \
+        wkhtmltopdf
+else
+    echo -e "\033[033mSkipping \033[036mwkhtmltopdf\033[033m install\033[0m"
+fi
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Image Optimizers
