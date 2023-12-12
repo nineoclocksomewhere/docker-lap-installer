@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.29"
+V_SCRIPT_VERSION="1.0.30"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -94,6 +94,7 @@ apt-get update && apt-get install -y \
     zlib1g \
     cron \
     zip \
+    rsync \
     unzip \
     memcached \
     libmemcached-dev
