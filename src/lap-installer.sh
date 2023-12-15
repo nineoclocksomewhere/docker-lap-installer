@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.30"
+V_SCRIPT_VERSION="1.0.31"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -284,25 +284,38 @@ if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
         # https://getcomposer.org/download/
         V_COMPOSER_HASH=$( curl https://composer.github.io/installer.sig )
         php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-        php -r "if (hash_file('sha384', 'composer-setup.php') === '${V_COMPOSER_HASH}') { echo 'Composer installer verified'; } else { echo 'Composer installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
-        if [[ -f composer-setup.php ]]; then
+        php -r "if (hash_file('sha384', 'composer-setup.php') === '${V_COMPOSER_HASH}') { echo \"\\033[032mComposer installer verified\\033[0mn\".PHP_EOL; } else { echo \"\\033[031mComposer installer corrupt\\033[0m\".PHP_EOL; unlink('composer-setup.php'); if (file_exists('composer-setup.php') { echo \"\\033[031mRemoving \".realpath('composer-setup.php').\" failed\\033[0m\".PHP_EOL; } }"
+        if [[ -f "composer-setup.php" ]]; then
+            echo -e "Composer installer saved as \033[036m$( realpath 'composer-setup.php' )\033[0m"
             echo -e "Running \033[036mcomposer-setup.php\033[0m"
             php composer-setup.php
+            if [[ ! $? -eq 0 ]]; then
+                echo -e "\033[031mError: installing composer failed, aborting\033[0m"
+                exit 1
+            fi
             echo -e "Removing \033[036mcomposer-setup.php\033[0m"
-            php -r "unlink('composer-setup.php');"
-            chmod +x composer.phar
-            if [[ ! -d /usr/local/bin ]]; then mkdir -p /usr/local/bin; fi
-            mv -f composer.phar /usr/local/bin/composer
-            # Cleanup
-            echo -e "Cleaning up the composer installer"
-            cd && rm -rf /tmp/composer-installer
+            php -r "unlink('composer-setup.php'); if (file_exists('composer-setup.php') { echo \"\\033[031mRemoving \".realpath('composer-setup.php').\" failed\\033[0m\".PHP_EOL; }"
+            if [[ -f composer.phar ]]; then
+                chmod +x composer.phar
+                if [[ ! -d /usr/local/bin ]]; then
+                    mkdir -p /usr/local/bin
+                fi
+                mv -f composer.phar /usr/local/bin/composer
+                echo -e "Cleaning up the composer installer"
+                cd && rm -rf /tmp/composer-installer
+            else
+                echo -e "\033[031mError: composer.phar not found, aborting\033[0m"
+                exit 1
+            fi
         else
-            echo -e "\033[031mError: installing composer failed, aborting\033[0m"; exit 1
+            echo -e "\033[031mError: installing composer failed, aborting\033[0m"
+            exit 1
         fi
         if [[ -f /usr/local/bin/composer ]]; then
             echo -e "\033[036mComposer\033[0m is now \033[032minstalled\033[0m!"
         else
-            echo -e "\033[031mError: installing composer failed, aborting\033[0m"; exit 1
+            echo -e "\033[031mError: installing composer failed, aborting\033[0m"
+            exit 1
         fi
     fi
 else
