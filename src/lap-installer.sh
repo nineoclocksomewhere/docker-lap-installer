@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.33"
+V_SCRIPT_VERSION="1.0.34"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -404,21 +404,24 @@ if [[ "${DOCKER_INSTALL_LARAVEL,,}" =~ ^(y|yes|1|true)$ ]]; then
             su - docker -c ". /home/${V_USER}/.bashrc; composer global require laravel/installer"
             echo -e "\033[036mComposer require\033[0m ended\n"
             if [[ ! -f "$V_LARAVEL_BIN_COMPOSER" && ! -f "$V_LARAVEL_BIN_CONFIG" ]]; then
-                echo -e "\033[031mError: installing the laravel installer failed, aborting (1)\033[0m"
+                echo -e "\033[031mError: installing the laravel installer failed, ${V_LARAVEL_BIN_COMPOSER} and ${V_LARAVEL_BIN_CONFIG} not found\033[0m"
                 exit 1
             fi
         fi
         if [[ -e "$V_LARAVEL_BIN_COMPOSER" && ! -e "$V_LARAVEL_BIN" ]]; then
             echo -e "Symlinking \033[036m${V_LARAVEL_BIN_COMPOSER}\033[0m to \033[036m${V_LARAVEL_BIN}\033[0m"
             ln -s "$V_LARAVEL_BIN_COMPOSER" "$V_LARAVEL_BIN"
-        elif [[ -e "$V_LARAVEL_BIN_CONFIG" && ! "$V_LARAVEL_BIN" ]]; then
+        elif [[ -e "$V_LARAVEL_BIN_CONFIG" && ! -e "$V_LARAVEL_BIN" ]]; then
             echo -e "Symlinking \033[036m${V_LARAVEL_BIN_CONFIG}\033[0m to \033[036m${V_LARAVEL_BIN}\033[0m"
             ln -s "$V_LARAVEL_BIN_CONFIG" "$V_LARAVEL_BIN"
+        else
+            echo -e "\033[031mError: installing the laravel installer failed, ${V_LARAVEL_BIN_COMPOSER} and ${V_LARAVEL_BIN_CONFIG} not found\033[0m"
+            exit 1
         fi
         if [[ -e "$V_LARAVEL_BIN" ]]; then
             echo -e "The \033[036mlaravel\033[0m installer is now \033[032minstalled\033[0m!"
         else
-            echo -e "\033[031mError: installing the laravel installer failed, aborting (2)\033[0m"
+            echo -e "\033[031mError: installing the laravel installer failed, ${$V_LARAVEL_BIN} not found\033[0m"
             exit 1
         fi
     fi
