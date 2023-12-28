@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.32"
+V_SCRIPT_VERSION="1.0.33"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -267,6 +267,8 @@ echo -e "Showing id of user \033[036m$V_USER\033[0m"
 id -u "$V_USER"
 echo -e "Showing contents of \033[036m/home/$V_USER\033[0m"
 ls -la /home/$V_USER
+V_USER_PATH=$( su - docker -c ". ~/.bashrc; echo \$PATH" )
+echo -e "\033[036m${V_USER}\033[0m's \$PATH is \033[036m/home/${V_USER_PATH}\033[0m"
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Composer
@@ -274,11 +276,11 @@ echo -e "\n\033[036m────────────────────
 echo -e "DOCKER_INSTALL_COMPOSER=\033[036m${DOCKER_INSTALL_COMPOSER}\033[036m"
 if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
     echo -e "Installing \033[036mComposer\033[0m"
-    echo -n -e "Checking if \033[036mcomposer\033[0m is installed..."
+    echo -e "Checking if \033[036mcomposer\033[0m is installed"
     if [[ -f /usr/local/bin/composer ]]; then
-        echo -e "\033[032minstalled\033[0m"
+        echo -e "\033[032mInstalled\033[0m"
     else
-        echo -e "\033[036mnot installed\033[0m, installing now"
+        echo -e "\033[036mNot installed\033[0m, installing now"
         # Prepare a composer installer directory
         mkdir /tmp/composer-installer && cd /tmp/composer-installer
         # https://getcomposer.org/download/
@@ -300,6 +302,7 @@ if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
                 if [[ ! -d /usr/local/bin ]]; then
                     mkdir -p /usr/local/bin
                 fi
+                echo -e "Moving \033[036m$( realpath composer.phar )\033[0m to \033[036m/usr/local/bin/composer\033[0m"
                 mv -f composer.phar /usr/local/bin/composer
                 echo -e "Cleaning up the composer installer"
                 cd && rm -rf /tmp/composer-installer
@@ -388,31 +391,35 @@ echo -e "\n\033[036m────────────────────
 [[ "$DOCKER_INSTALL_LARAVEL" == "" ]] && export DOCKER_INSTALL_LARAVEL="no"
 echo -e "DOCKER_INSTALL_LARAVEL=\033[036m${DOCKER_INSTALL_LARAVEL}\033[036m"
 if [[ "${DOCKER_INSTALL_LARAVEL,,}" =~ ^(y|yes|1|true)$ ]]; then
-    echo -e "Installing \033[036mLaravel\033[0m"
-    echo -n -e "Checking if the \033[036mlaravel\033[0m installer is installed..."
-    if [[ -e /usr/local/bin/laravel ]]; then
-        echo -e "\033[032minstalled\033[0m"
+    echo -e "Checking if the \033[036mlaravel installer\033[0m is installed"
+    V_LARAVEL_BIN="/usr/local/bin/laravel"
+    if [[ -e "$V_LARAVEL_BIN" ]]; then
+        echo -e "\033[032mInstalled\033[0m"
     else
-        echo
-        if [[ ! -f /root/.composer/vendor/laravel/installer/bin/laravel && ! -f /root/.config/composer/vendor/laravel/installer/bin/laravel ]]; then
-            echo -e "\nRunning \033[036mComposer require\033[0m"
-            composer global require laravel/installer
+        echo -e "Installing the \033[036mlaravel installer\033[0m for user \033[036${V_USER}\033[0m"
+        V_LARAVEL_BIN_COMPOSER="/home/${V_USER}/.composer/vendor/laravel/installer/bin/laravel"
+        V_LARAVEL_BIN_CONFIG="/home/${V_USER}/.config/composer/vendor/laravel/installer/bin/laravel"
+        if [[ ! -f "$V_LARAVEL_BIN_COMPOSER" && ! -f "$V_LARAVEL_BIN_CONFIG" ]]; then
+            echo -e "\nRunning \033[036mComposer require\033[0m for user \033[036m${V_USER}\033[0m"
+            su - docker -c ". /home/${V_USER}/.bashrc; composer global require laravel/installer"
             echo -e "\033[036mComposer require\033[0m ended\n"
-            if [[ ! -f /root/.composer/vendor/laravel/installer/bin/laravel && ! -f /root/.config/composer/vendor/laravel/installer/bin/laravel ]]; then
-                echo -e "\033[031mError: installing the laravel installer failed, aborting (1)\033[0m" && exit 1
+            if [[ ! -f "$V_LARAVEL_BIN_COMPOSER" && ! -f "$V_LARAVEL_BIN_CONFIG" ]]; then
+                echo -e "\033[031mError: installing the laravel installer failed, aborting (1)\033[0m"
+                exit 1
             fi
         fi
-        if [[ -e /root/.composer/vendor/laravel/installer/bin/laravel && ! -e /usr/local/bin/laravel ]]; then
-            echo -e "Symlinking \033[036m/root/.composer/vendor/laravel/installer/bin/laravel\033[0m to \033[036m/usr/local/bin/laravel\033[0m"
-            ln -s /root/.composer/vendor/laravel/installer/bin/laravel /usr/local/bin/laravel
-        elif [[ -e /root/.config/composer/vendor/laravel/installer/bin/laravel && ! -e /usr/local/bin/laravel ]]; then
-            echo -e "Symlinking \033[036m/root/.config/composer/vendor/laravel/installer/bin/laravel\033[0m to \033[036m/usr/local/bin/laravel\033[0m"
-            ln -s /root/.config/composer/vendor/laravel/installer/bin/laravel /usr/local/bin/laravel
+        if [[ -e "$V_LARAVEL_BIN_COMPOSER" && ! -e "$V_LARAVEL_BIN" ]]; then
+            echo -e "Symlinking \033[036m${V_LARAVEL_BIN_COMPOSER}\033[0m to \033[036m${V_LARAVEL_BIN}\033[0m"
+            ln -s "$V_LARAVEL_BIN_COMPOSER" "$V_LARAVEL_BIN"
+        elif [[ -e "$V_LARAVEL_BIN_CONFIG" && ! "$V_LARAVEL_BIN" ]]; then
+            echo -e "Symlinking \033[036m${V_LARAVEL_BIN_CONFIG}\033[0m to \033[036m${V_LARAVEL_BIN}\033[0m"
+            ln -s "$V_LARAVEL_BIN_CONFIG" "$V_LARAVEL_BIN"
         fi
-        if [[ -e /usr/local/bin/laravel ]]; then
+        if [[ -e "$V_LARAVEL_BIN" ]]; then
             echo -e "The \033[036mlaravel\033[0m installer is now \033[032minstalled\033[0m!"
         else
-            echo -e "\033[031mError: installing the laravel installer failed, aborting (2)\033[0m" && exit 1
+            echo -e "\033[031mError: installing the laravel installer failed, aborting (2)\033[0m"
+            exit 1
         fi
     fi
 else
