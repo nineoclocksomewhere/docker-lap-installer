@@ -286,7 +286,7 @@ if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
         # https://getcomposer.org/download/
         V_COMPOSER_HASH=$( curl https://composer.github.io/installer.sig )
         php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-        php -r "if (hash_file('sha384', 'composer-setup.php') === '${V_COMPOSER_HASH}') { echo \"\\033[032mComposer installer verified\\033[0mn\".PHP_EOL; } else { echo \"\\033[031mComposer installer corrupt\\033[0m\".PHP_EOL; unlink('composer-setup.php'); if (file_exists('composer-setup.php')) { echo \"\\033[031mRemoving \".realpath('composer-setup.php').\" failed\\033[0m\".PHP_EOL; } }"
+        php -r "if (hash_file('sha384', 'composer-setup.php') === '${V_COMPOSER_HASH}') { echo \"\\033[032mComposer installer verified\\033[0m\".PHP_EOL; } else { echo \"\\033[031mComposer installer corrupt\\033[0m\".PHP_EOL; unlink('composer-setup.php'); if (file_exists('composer-setup.php')) { echo \"\\033[031mRemoving \".realpath('composer-setup.php').\" failed\\033[0m\".PHP_EOL; } }"
         if [[ -f "composer-setup.php" ]]; then
             echo -e "Composer installer saved as \033[036m$( realpath 'composer-setup.php' )\033[0m"
             echo -e "Running \033[036mcomposer-setup.php\033[0m"
