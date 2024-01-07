@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.34"
+V_SCRIPT_VERSION="1.0.35"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -226,6 +226,32 @@ if [[ "${DOCKER_INSTALL_PHP_SOAP,,}" =~ ^(y|yes|1|true)$ ]]; then
         docker-php-ext-install -j$(nproc) soap
     else
         echo -e "\nPHP extension \033[036msoap\033[0m already installed"
+    fi
+fi
+
+if [[ "$DOCKER_INSTALL_PHP_SODIUM" == "" ]]; then
+    export DOCKER_INSTALL_PHP_SODIUM="no"
+fi
+echo -e "DOCKER_INSTALL_PHP_SODIUM=\033[036m${DOCKER_INSTALL_PHP_SODIUM}\033[036m"
+if [[ "${DOCKER_INSTALL_PHP_SODIUM,,}" =~ ^(y|yes|1|true)$ ]]; then
+    if [[ $( php -m | grep 'sodium' | wc -l ) -eq 0 ]]; then
+        echo -e "\nInstalling PHP extension \033[036msodium\033[0m"
+        docker-php-ext-install -j$(nproc) sodium
+    else
+        echo -e "\nPHP extension \033[036msodium\033[0m already installed"
+    fi
+fi
+
+if [[ "$DOCKER_INSTALL_PHP_ZIP" == "" ]]; then
+    export DOCKER_INSTALL_PHP_ZIP="yes"
+fi
+echo -e "DOCKER_INSTALL_PHP_ZIP=\033[036m${DOCKER_INSTALL_PHP_ZIP}\033[036m"
+if [[ "${DOCKER_INSTALL_PHP_ZIP,,}" =~ ^(y|yes|1|true)$ ]]; then
+    if [[ $( php -m | grep 'zip' | wc -l ) -eq 0 ]]; then
+        echo -e "\nInstalling PHP extension \033[036mzip\033[0m"
+        docker-php-ext-install -j$(nproc) zip
+    else
+        echo -e "\nPHP extension \033[036mzip\033[0m already installed"
     fi
 fi
 
