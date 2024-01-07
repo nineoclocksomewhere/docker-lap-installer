@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.37"
+V_SCRIPT_VERSION="1.0.38"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -218,6 +218,19 @@ if [[ "${DOCKER_INSTALL_PHP_EXIF,,}" =~ ^(y|yes|1|true)$ ]]; then
         docker-php-ext-install -j$(nproc) exif
     else
         echo -e "\nPHP extension \033[036mexif\033[0m already installed"
+    fi
+fi
+
+if [[ "$DOCKER_INSTALL_PHP_INTL" == "" ]]; then
+    export DOCKER_INSTALL_PHP_INTL="yes"
+fi
+echo -e "DOCKER_INSTALL_PHP_INTL=\033[036m${DOCKER_INSTALL_PHP_INTL}\033[0m"
+if [[ "${DOCKER_INSTALL_PHP_INTL,,}" =~ ^(y|yes|1|true)$ ]]; then
+    if [[ $( php -m | grep 'intl' | wc -l ) -eq 0 ]]; then
+        echo -e "\nInstalling PHP extension \033[036mintl\033[0m"
+        docker-php-ext-install -j$(nproc) intl
+    else
+        echo -e "\nPHP extension \033[036mintl\033[0m already installed"
     fi
 fi
 
