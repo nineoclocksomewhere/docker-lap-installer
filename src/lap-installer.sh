@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.36"
+V_SCRIPT_VERSION="1.0.37"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -165,7 +165,10 @@ else
     echo -e "\nPHP extension \033[036mmemcached\033[0m already installed"
 fi
 
-[[ "$DOCKER_INSTALL_PHP_GD" == "" ]] && export DOCKER_INSTALL_PHP_GD="yes"; echo -e "DOCKER_INSTALL_PHP_GD=\033[036m${DOCKER_INSTALL_PHP_GD}\033[036m"
+if [[ "$DOCKER_INSTALL_PHP_GD" == "" ]]; then
+    export DOCKER_INSTALL_PHP_GD="yes"
+fi
+echo -e "DOCKER_INSTALL_PHP_GD=\033[036m${DOCKER_INSTALL_PHP_GD}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_GD,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'gd' | wc -l ) -eq 0 ]]; then
         echo -e "\nInstalling PHP extension \033[036mgd\033[0m"
@@ -179,7 +182,10 @@ if [[ "${DOCKER_INSTALL_PHP_GD,,}" =~ ^(y|yes|1|true)$ ]]; then
     fi
 fi
 
-[[ "$DOCKER_INSTALL_PHP_PDO_MYSQL" == "" ]] && export DOCKER_INSTALL_PHP_PDO_MYSQL="yes"; echo -e "DOCKER_INSTALL_PHP_PDO_MYSQL=\033[036m${DOCKER_INSTALL_PHP_PDO_MYSQL}\033[036m"
+if [[ "$DOCKER_INSTALL_PHP_PDO_MYSQL" == "" ]]; then
+    export DOCKER_INSTALL_PHP_PDO_MYSQL="yes"
+fi
+echo -e "DOCKER_INSTALL_PHP_PDO_MYSQL=\033[036m${DOCKER_INSTALL_PHP_PDO_MYSQL}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_PDO_MYSQL,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'pdo_mysql' | wc -l ) -eq 0 ]]; then
         echo -e "\nInstalling PHP extension \033[036mpdo_mysql\033[0m"
@@ -189,7 +195,10 @@ if [[ "${DOCKER_INSTALL_PHP_PDO_MYSQL,,}" =~ ^(y|yes|1|true)$ ]]; then
     fi
 fi
 
-[[ "$DOCKER_INSTALL_PHP_MYSQLI" == "" ]] && export DOCKER_INSTALL_PHP_MYSQLI="yes"; echo -e "DOCKER_INSTALL_PHP_MYSQLI=\033[036m${DOCKER_INSTALL_PHP_MYSQLI}\033[036m"
+if [[ "$DOCKER_INSTALL_PHP_MYSQLI" == "" ]]; then
+    export DOCKER_INSTALL_PHP_MYSQLI="yes"
+fi
+echo -e "DOCKER_INSTALL_PHP_MYSQLI=\033[036m${DOCKER_INSTALL_PHP_MYSQLI}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_MYSQLI,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'mysqli' | wc -l ) -eq 0 ]]; then
         echo -e "\nInstalling PHP extension \033[036mmysqli\033[0m"
@@ -199,7 +208,10 @@ if [[ "${DOCKER_INSTALL_PHP_MYSQLI,,}" =~ ^(y|yes|1|true)$ ]]; then
     fi
 fi
 
-[[ "$DOCKER_INSTALL_PHP_EXIF" == "" ]] && export DOCKER_INSTALL_PHP_EXIF="yes"; echo -e "DOCKER_INSTALL_PHP_EXIF=\033[036m${DOCKER_INSTALL_PHP_EXIF}\033[036m"
+if [[ "$DOCKER_INSTALL_PHP_EXIF" == "" ]]; then
+    export DOCKER_INSTALL_PHP_EXIF="yes"
+fi
+echo -e "DOCKER_INSTALL_PHP_EXIF=\033[036m${DOCKER_INSTALL_PHP_EXIF}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_EXIF,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'exif' | wc -l ) -eq 0 ]]; then
         echo -e "\nInstalling PHP extension \033[036mexif\033[0m"
@@ -209,7 +221,10 @@ if [[ "${DOCKER_INSTALL_PHP_EXIF,,}" =~ ^(y|yes|1|true)$ ]]; then
     fi
 fi
 
-[[ "$DOCKER_INSTALL_PHP_SOCKETS" == "" ]] && export DOCKER_INSTALL_PHP_SOCKETS="yes"; echo -e "DOCKER_INSTALL_PHP_SOCKETS=\033[036m${DOCKER_INSTALL_PHP_SOCKETS}\033[036m"
+if [[ "$DOCKER_INSTALL_PHP_SOCKETS" == "" ]]; then
+    export DOCKER_INSTALL_PHP_SOCKETS="yes"
+fi
+echo -e "DOCKER_INSTALL_PHP_SOCKETS=\033[036m${DOCKER_INSTALL_PHP_SOCKETS}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_SOCKETS,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'sockets' | wc -l ) -eq 0 ]]; then
         echo -e "\nInstalling PHP extension \033[036msockets\033[0m"
@@ -219,7 +234,10 @@ if [[ "${DOCKER_INSTALL_PHP_SOCKETS,,}" =~ ^(y|yes|1|true)$ ]]; then
     fi
 fi
 
-[[ "$DOCKER_INSTALL_PHP_SOAP" == "" ]] && export DOCKER_INSTALL_PHP_SOAP="no"; echo -e "DOCKER_INSTALL_PHP_SOAP=\033[036m${DOCKER_INSTALL_PHP_SOAP}\033[036m"
+if [[ "$DOCKER_INSTALL_PHP_SOAP" == "" ]]; then
+    export DOCKER_INSTALL_PHP_SOAP="no"
+fi
+echo -e "DOCKER_INSTALL_PHP_SOAP=\033[036m${DOCKER_INSTALL_PHP_SOAP}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_SOAP,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'soap' | wc -l ) -eq 0 ]]; then
         echo -e "\nInstalling PHP extension \033[036msoap\033[0m"
@@ -232,7 +250,7 @@ fi
 if [[ "$DOCKER_INSTALL_PHP_SODIUM" == "" ]]; then
     export DOCKER_INSTALL_PHP_SODIUM="no"
 fi
-echo -e "DOCKER_INSTALL_PHP_SODIUM=\033[036m${DOCKER_INSTALL_PHP_SODIUM}\033[036m"
+echo -e "DOCKER_INSTALL_PHP_SODIUM=\033[036m${DOCKER_INSTALL_PHP_SODIUM}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_SODIUM,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'sodium' | wc -l ) -eq 0 ]]; then
         echo -e "\nInstalling PHP extension \033[036msodium\033[0m"
@@ -286,7 +304,7 @@ echo -e "\n\033[036m────────────────────
 
 # Composer
 [[ "$DOCKER_INSTALL_COMPOSER" == "" ]] && export DOCKER_INSTALL_COMPOSER="yes"
-echo -e "DOCKER_INSTALL_COMPOSER=\033[036m${DOCKER_INSTALL_COMPOSER}\033[036m"
+echo -e "DOCKER_INSTALL_COMPOSER=\033[036m${DOCKER_INSTALL_COMPOSER}\033[0m"
 if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
     echo -e "Installing \033[036mComposer\033[0m"
     echo -e "Checking if \033[036mcomposer\033[0m is installed"
@@ -341,7 +359,7 @@ echo -e "\n\033[036m────────────────────
 
 # NodeJS
 [[ "$DOCKER_INSTALL_NODEJS" == "" ]] && export DOCKER_INSTALL_NODEJS="no"
-echo -e "DOCKER_INSTALL_NODEJS=\033[036m${DOCKER_INSTALL_NODEJS}\033[036m"
+echo -e "DOCKER_INSTALL_NODEJS=\033[036m${DOCKER_INSTALL_NODEJS}\033[0m"
 if [[ "${DOCKER_INSTALL_NODEJS,,}" =~ ^(y|yes|1|true)$ ]]; then
     echo -e "Installing \033[036mNodeJS\033[0m"
     V_NODE_USER="${V_USER}"
@@ -390,7 +408,7 @@ echo -e "\n\033[036m────────────────────
 
 # NodeJS
 [[ "$DOCKER_INSTALL_PYTHON3" == "" ]] && export DOCKER_INSTALL_PYTHON3="yes"
-echo -e "DOCKER_INSTALL_PYTHON3=\033[036m${DOCKER_INSTALL_PYTHON3}\033[036m"
+echo -e "DOCKER_INSTALL_PYTHON3=\033[036m${DOCKER_INSTALL_PYTHON3}\033[0m"
 if [[ "${DOCKER_INSTALL_PYTHON3,,}" =~ ^(y|yes|1|true)$ ]]; then
     echo -e "Installing \033[036mPython3\033[0m"
     apt-get update && apt-get install -y python3
@@ -402,7 +420,7 @@ echo -e "\n\033[036m────────────────────
 
 # Laravel
 [[ "$DOCKER_INSTALL_LARAVEL" == "" ]] && export DOCKER_INSTALL_LARAVEL="no"
-echo -e "DOCKER_INSTALL_LARAVEL=\033[036m${DOCKER_INSTALL_LARAVEL}\033[036m"
+echo -e "DOCKER_INSTALL_LARAVEL=\033[036m${DOCKER_INSTALL_LARAVEL}\033[0m"
 if [[ "${DOCKER_INSTALL_LARAVEL,,}" =~ ^(y|yes|1|true)$ ]]; then
     echo -e "Checking if the \033[036mlaravel installer\033[0m is installed"
     V_LARAVEL_BIN="/usr/local/bin/laravel"
