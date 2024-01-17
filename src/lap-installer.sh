@@ -139,15 +139,15 @@ echo
 
 echo -e "Checking \033[036mPHP extensions\033[0m"
 if [[ $( php -m | grep 'zip' | wc -l ) -eq 0 ]]; then
-    echo -e "\nInstalling PHP extension \033[036mzip\033[0m"
+    echo -e "Installing PHP extension \033[036mzip\033[0m"
     docker-php-ext-configure zip --with-libzip
     docker-php-ext-install -j$(nproc) zip
 else
-    echo -e "\nPHP extension \033[036mzip\033[0m already installed"
+    echo -e "PHP extension \033[036mzip\033[0m already installed"
 fi
 
 if [[ $( php -m | grep 'memcached' | wc -l ) -eq 0 ]]; then
-    echo -e "\nInstalling PHP extension \033[036mmemcached\033[0m"
+    echo -e "Installing PHP extension \033[036mmemcached\033[0m"
     # ref: https://bobcares.com/blog/docker-php-ext-install-memcached/
     # ref: https://github.com/php-memcached-dev/php-memcached/issues/408
     if [[ $V_PHP_MAJOR_VERSION -eq 7 ]]; then
@@ -162,7 +162,7 @@ if [[ $( php -m | grep 'memcached' | wc -l ) -eq 0 ]]; then
             && docker-php-ext-install $MEMCACHED
     fi
 else
-    echo -e "\nPHP extension \033[036mmemcached\033[0m already installed"
+    echo -e "PHP extension \033[036mmemcached\033[0m already installed"
 fi
 
 if [[ "$DOCKER_INSTALL_PHP_BCMATH" == "" ]]; then
@@ -171,10 +171,10 @@ fi
 echo -e "DOCKER_INSTALL_PHP_BCMATH=\033[036m${DOCKER_INSTALL_PHP_BCMATH}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_BCMATH,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'bcmath' | wc -l ) -eq 0 ]]; then
-        echo -e "\nInstalling PHP extension \033[036mbcmath\033[0m"
+        echo -e "Installing PHP extension \033[036mbcmath\033[0m"
         docker-php-ext-install -j$(nproc) bcmath
     else
-        echo -e "\nPHP extension \033[036mbcmath\033[0m already installed"
+        echo -e "PHP extension \033[036mbcmath\033[0m already installed"
     fi
 fi
 
@@ -184,14 +184,14 @@ fi
 echo -e "DOCKER_INSTALL_PHP_GD=\033[036m${DOCKER_INSTALL_PHP_GD}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_GD,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'gd' | wc -l ) -eq 0 ]]; then
-        echo -e "\nInstalling PHP extension \033[036mgd\033[0m"
+        echo -e "Installing PHP extension \033[036mgd\033[0m"
         if [[ $V_PHP_MAJOR_VERSION -eq 7 && $V_PHP_MINOR_VERSION -le 3 ]]; then
             docker-php-ext-configure gd --with-freetype-dir=/usr/lib --with-png-dir=/usr/lib --with-jpeg-dir=/usr/lib && docker-php-ext-install -j$(nproc) gd
         else
             docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && docker-php-ext-install -j$(nproc) gd
         fi
     else
-        echo -e "\nPHP extension \033[036mgd\033[0m already installed"
+        echo -e "PHP extension \033[036mgd\033[0m already installed"
     fi
 fi
 
@@ -201,10 +201,10 @@ fi
 echo -e "DOCKER_INSTALL_PHP_PDO_MYSQL=\033[036m${DOCKER_INSTALL_PHP_PDO_MYSQL}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_PDO_MYSQL,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'pdo_mysql' | wc -l ) -eq 0 ]]; then
-        echo -e "\nInstalling PHP extension \033[036mpdo_mysql\033[0m"
+        echo -e "Installing PHP extension \033[036mpdo_mysql\033[0m"
         docker-php-ext-install -j$(nproc) pdo_mysql
     else
-        echo -e "\nPHP extension \033[036mpdo_mysql\033[0m already installed"
+        echo -e "PHP extension \033[036mpdo_mysql\033[0m already installed"
     fi
 fi
 
@@ -214,10 +214,10 @@ fi
 echo -e "DOCKER_INSTALL_PHP_MYSQLI=\033[036m${DOCKER_INSTALL_PHP_MYSQLI}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_MYSQLI,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'mysqli' | wc -l ) -eq 0 ]]; then
-        echo -e "\nInstalling PHP extension \033[036mmysqli\033[0m"
+        echo -e "Installing PHP extension \033[036mmysqli\033[0m"
         docker-php-ext-install -j$(nproc) mysqli
     else
-        echo -e "\nPHP extension \033[036mmysqli\033[0m already installed"
+        echo -e "PHP extension \033[036mmysqli\033[0m already installed"
     fi
 fi
 
@@ -227,10 +227,10 @@ fi
 echo -e "DOCKER_INSTALL_PHP_EXIF=\033[036m${DOCKER_INSTALL_PHP_EXIF}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_EXIF,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'exif' | wc -l ) -eq 0 ]]; then
-        echo -e "\nInstalling PHP extension \033[036mexif\033[0m"
+        echo -e "Installing PHP extension \033[036mexif\033[0m"
         docker-php-ext-install -j$(nproc) exif
     else
-        echo -e "\nPHP extension \033[036mexif\033[0m already installed"
+        echo -e "PHP extension \033[036mexif\033[0m already installed"
     fi
 fi
 
@@ -240,10 +240,10 @@ fi
 echo -e "DOCKER_INSTALL_PHP_INTL=\033[036m${DOCKER_INSTALL_PHP_INTL}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_INTL,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'intl' | wc -l ) -eq 0 ]]; then
-        echo -e "\nInstalling PHP extension \033[036mintl\033[0m"
+        echo -e "Installing PHP extension \033[036mintl\033[0m"
         docker-php-ext-install -j$(nproc) intl
     else
-        echo -e "\nPHP extension \033[036mintl\033[0m already installed"
+        echo -e "PHP extension \033[036mintl\033[0m already installed"
     fi
 fi
 
@@ -253,10 +253,10 @@ fi
 echo -e "DOCKER_INSTALL_PHP_SOCKETS=\033[036m${DOCKER_INSTALL_PHP_SOCKETS}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_SOCKETS,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'sockets' | wc -l ) -eq 0 ]]; then
-        echo -e "\nInstalling PHP extension \033[036msockets\033[0m"
+        echo -e "Installing PHP extension \033[036msockets\033[0m"
         docker-php-ext-install -j$(nproc) sockets
     else
-        echo -e "\nPHP extension \033[036msockets\033[0m already installed"
+        echo -e "PHP extension \033[036msockets\033[0m already installed"
     fi
 fi
 
@@ -266,10 +266,10 @@ fi
 echo -e "DOCKER_INSTALL_PHP_SOAP=\033[036m${DOCKER_INSTALL_PHP_SOAP}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_SOAP,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'soap' | wc -l ) -eq 0 ]]; then
-        echo -e "\nInstalling PHP extension \033[036msoap\033[0m"
+        echo -e "Installing PHP extension \033[036msoap\033[0m"
         docker-php-ext-install -j$(nproc) soap
     else
-        echo -e "\nPHP extension \033[036msoap\033[0m already installed"
+        echo -e "PHP extension \033[036msoap\033[0m already installed"
     fi
 fi
 
@@ -279,10 +279,10 @@ fi
 echo -e "DOCKER_INSTALL_PHP_SODIUM=\033[036m${DOCKER_INSTALL_PHP_SODIUM}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_SODIUM,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'sodium' | wc -l ) -eq 0 ]]; then
-        echo -e "\nInstalling PHP extension \033[036msodium\033[0m"
+        echo -e "Installing PHP extension \033[036msodium\033[0m"
         docker-php-ext-install -j$(nproc) sodium
     else
-        echo -e "\nPHP extension \033[036msodium\033[0m already installed"
+        echo -e "PHP extension \033[036msodium\033[0m already installed"
     fi
 fi
 
