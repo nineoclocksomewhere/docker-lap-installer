@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.39"
+V_SCRIPT_VERSION="1.0.40"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -172,7 +172,7 @@ echo -e "DOCKER_INSTALL_PHP_BCMATH=\033[036m${DOCKER_INSTALL_PHP_BCMATH}\033[0m"
 if [[ "${DOCKER_INSTALL_PHP_BCMATH,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'bcmath' | wc -l ) -eq 0 ]]; then
         echo -e "\nInstalling PHP extension \033[036mbcmath\033[0m"
-        docker-php-ext-configure bcmath --with-freetype --with-jpeg --with-webp && docker-php-ext-install -j$(nproc) bcmath
+        docker-php-ext-install -j$(nproc) bcmath
     else
         echo -e "\nPHP extension \033[036mbcmath\033[0m already installed"
     fi
