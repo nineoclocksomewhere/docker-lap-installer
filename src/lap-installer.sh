@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.40"
+V_SCRIPT_VERSION="1.0.41"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -97,7 +97,8 @@ apt-get update && apt-get install -y \
     rsync \
     unzip \
     memcached \
-    libmemcached-dev
+    libmemcached-dev \
+    pv
 echo -e "\033[032mDone\033[0m"
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
