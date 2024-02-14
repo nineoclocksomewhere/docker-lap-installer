@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.41"
+V_SCRIPT_VERSION="1.0.42"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -69,7 +69,13 @@ echo -e "\n\033[036m────────────────────
 
 # Basic packages
 echo -e "Verifying if \033[036mall basic packages\033[0m are installed"
-apt-get update && apt-get install -y \
+# https://askubuntu.com/a/1500085
+if [[ -d /var/lib/dpkg/updates ]]; then
+    rm /var/lib/dpkg/updates/*
+fi
+apt-get update
+apt-get -y upgrade
+apt-get install -y \
     coreutils \
     libfreetype6-dev \
     libgd-dev \
