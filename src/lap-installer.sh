@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.42"
+V_SCRIPT_VERSION="1.0.43"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -431,6 +431,10 @@ if [[ "${DOCKER_INSTALL_NODEJS,,}" =~ ^(y|yes|1|true)$ ]]; then
             nvm use default; \
             npm install -g npm@latest; \
             npm install -g svgo"
+        if [[ ! $? -eq 0 ]]; then
+            echo -e "\033[031mError: installing node failed, aborting\033[0m"
+            exit 1
+        fi
     else
         echo -e "\033[036mModeJS\033[0m already \033[032minstalled\033[0m for user \033[036m$( whoami )\033[0m"
     fi
