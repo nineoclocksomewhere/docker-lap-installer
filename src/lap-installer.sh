@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.43"
+V_SCRIPT_VERSION="1.0.44"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -36,6 +36,17 @@ else
     echo -e "\033[033mInstallation outdated (current: \033[091m${V_CURRENT_VERSION}\033[033m, required: \033[092m${V_SCRIPT_VERSION}\033[033m), updating now\033[0m"
 fi
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+
+# Custom before installer script?
+which lap-installer-before
+if [[ $? -eq 0 ]]; then
+    bash lap-installer-before
+    if [[ ! $? -eq 0 ]]; then
+        echo -e "\033[031mError: before installer failed, aborting\033[0m"
+        exit 1
+    fi
+    echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+fi
 
 # User configuration - Part 1/2
 echo -e "Checking \033[036muser\033[0m configuration (Part 1/2)"
@@ -506,6 +517,17 @@ if [[ $V_BASHRC_CREATED -eq 1 ]]; then
 fi
 echo -e "\033[032mDone\033[0m"
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+
+# Custom after installer script?
+which lap-installer-after
+if [[ $? -eq 0 ]]; then
+    bash lap-installer-after
+    if [[ ! $? -eq 0 ]]; then
+        echo -e "\033[031mError: after installer failed, aborting\033[0m"
+        exit 1
+    fi
+    echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+fi
 
 # APT cleanup
 echo -e "Running \033[036mAPT cleanup\033[0m"
