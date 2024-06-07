@@ -21,7 +21,7 @@ From now on you can start the container in detached mode.
 # Configuration
 
 Search for the PHP version of your choice at https://hub.docker.com/_/php/tags .
-Select a version with the tag-name ending in *-apache-<debian-release-name>*,
+Select a version with the tag-name ending in *-apache-&lt;debian-release-name&gt;*,
 for example *8.3.8-apache-bullseye*.
 
 # Usage
