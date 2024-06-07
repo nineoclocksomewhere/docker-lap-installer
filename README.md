@@ -51,7 +51,7 @@ Example:
 
 ## Using the lap-updater script
 
-With the lap-update script you keep your Docker container up-to-date.
+With the lap-updater script you keep your Docker container up-to-date.
 
 Instead of adding the lap-installer.sh script to your volumes, add the lap-updater.sh script.
 ```yaml
