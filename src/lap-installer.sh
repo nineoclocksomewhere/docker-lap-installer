@@ -513,7 +513,16 @@ echo -e "\n\033[036m────────────────────
 # Last changes ... keep them last!
 echo -e "Running some final commands before cleaning up the system\033[0m"
 if [[ $V_BASHRC_CREATED -eq 1 ]]; then
+    
+    echo -e "\033[036mAdding .bash_aliases to .bashrc file\033[0m"
+    echo "" >> /home/$V_USER/.bashrc
+    echo "if [ -f ~/.bash_aliases ]; then" >> /home/$V_USER/.bashrc
+    echo "    . ~/.bash_aliases" >> /home/$V_USER/.bashrc
+    echo "fi" >> /home/$V_USER/.bashrc
+
     echo -e "\033[036mAdding connect redirect when starting bash\033[0m"
+    
+    echo "" >> /home/$V_USER/.bashrc    
     echo "cd /var/www/html" >> /home/$V_USER/.bashrc
 fi
 echo -e "\033[032mDone\033[0m"
