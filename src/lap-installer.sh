@@ -102,6 +102,7 @@ apt-get install -y \
     coreutils \
     git \
     vim \
+    nano \
     webp \
     wget \
     mariadb-client \
