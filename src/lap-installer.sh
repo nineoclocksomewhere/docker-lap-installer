@@ -120,6 +120,24 @@ apt-get install -y \
 echo -e "\033[032mDone\033[0m"
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
+# Locales
+echo -e "Installing and updating \033[036mlocales\033[0m"
+# Install locales package
+apt-get install -y locales
+# Uncomment locales for inclusion in generation
+if [[ -f /etc/locale.gen ]]; then
+    sed -i 's/^# *\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+    sed -i 's/^# *\(nl_BE.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+    sed -i 's/^# *\(nl_NL.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+    sed -i 's/^# *\(fr_BE.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+    sed -i 's/^# *\(fr_FR.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+    sed -i 's/^# *\(de_DE.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+fi
+# Generate locales
+locale-gen
+
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+
 # WKHTMLTOPDF
 [[ "$DOCKER_INSTALL_WKHTMLTOPDF" == "" ]] && export DOCKER_INSTALL_WKHTMLTOPDF="no"
 echo -e "DOCKER_INSTALL_WKHTMLTOPDF=\033[036m${DOCKER_INSTALL_WKHTMLTOPDF}\033[036m"
