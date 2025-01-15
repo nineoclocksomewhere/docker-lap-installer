@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.47"
+V_SCRIPT_VERSION="1.0.48"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -490,19 +490,7 @@ echo -e "\n\033[036m────────────────────
 echo -e "DOCKER_INSTALL_SLATE=\033[036m${DOCKER_INSTALL_SLATE}\033[0m"
 if [[ "${DOCKER_INSTALL_SLATE,,}" =~ ^(y|yes|1|true)$ ]]; then
     echo -e "Installing \033[036mSlate\033[0m"
-    apt-get update -y && apt-get install -y ruby ruby-dev build-essential libffi-dev zlib1g-dev liblzma-dev nodejs patch
-    V_GEM_OK=0
-    gem update --system
-    if [[ $? -eq 0 ]]; then
-        gem install bundler
-        if [[ $? -eq 0 ]]; then
-            V_GEM_OK=1
-        fi
-    fi
-    if [[ $V_GEM_OK -eq 0 ]]; then
-        echo -e "\033[033mInstall using gem failed, trying bundler\033[0m"
-        apt-get install -y bundler
-    fi
+    apt-get update -y && apt-get install -y ruby ruby-dev build-essential libffi-dev zlib1g-dev liblzma-dev nodejs patch bundler
     mkdir /slate
     chmod 0775 /slate
     chown docker:docker /slate
@@ -517,7 +505,6 @@ if [[ "${DOCKER_INSTALL_SLATE,,}" =~ ^(y|yes|1|true)$ ]]; then
     cd /slate
     su -c "bundle config set --local path 'vendor/bundle'" docker
     su -c "bundle install" docker
-    su -c "npm install" docker
     echo '#!/usr/bin/env bash' > /usr/local/bin/slate
     echo 'CUSTOM_SOURCE="$1"' >> /usr/local/bin/slate
     echo 'if [[ ! -d "$CUSTOM_SOURCE" ]]; then' >> /usr/local/bin/slate
@@ -525,6 +512,10 @@ if [[ "${DOCKER_INSTALL_SLATE,,}" =~ ^(y|yes|1|true)$ ]]; then
     echo '    exit 1' >> /usr/local/bin/slate
     echo 'fi' >> /usr/local/bin/slate
     echo 'CUSTOM_OUTPUT="$2"' >> /usr/local/bin/slate
+    echo 'if [[ "$CUSTOM_OUTPUT" == "" ]]; then' >> /usr/local/bin/slate
+    echo '    echo -e "\033[031mError: invalid output directory provided\033[0m]"' >> /usr/local/bin/slate
+    echo '    exit 1' >> /usr/local/bin/slate
+    echo 'fi' >> /usr/local/bin/slate
     echo 'if [[ -e /slate/source ]]; then' >> /usr/local/bin/slate
     echo '    if [[ -d /slate/source ]]; then' >> /usr/local/bin/slate
     echo '        rm -rf /slate/source' >> /usr/local/bin/slate
@@ -536,6 +527,7 @@ if [[ "${DOCKER_INSTALL_SLATE,,}" =~ ^(y|yes|1|true)$ ]]; then
     echo 'PWD=$( pwd )' >> /usr/local/bin/slate
     echo 'cd /slate' >> /usr/local/bin/slate
     echo 'bundle exec middleman build --build-dir="$CUSTOM_OUTPUT"' >> /usr/local/bin/slate
+    echo 'rm /slate/source' >> /usr/local/bin/slate
     echo 'cd "$PWD"' >> /usr/local/bin/slate
     echo 'exit 0' >> /usr/local/bin/slate
     chmod +x /usr/local/bin/slate
