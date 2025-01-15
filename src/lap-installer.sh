@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.45"
+V_SCRIPT_VERSION="1.0.46"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -473,7 +473,7 @@ else
 fi
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
-# NodeJS
+# Python
 [[ "$DOCKER_INSTALL_PYTHON3" == "" ]] && export DOCKER_INSTALL_PYTHON3="yes"
 echo -e "DOCKER_INSTALL_PYTHON3=\033[036m${DOCKER_INSTALL_PYTHON3}\033[0m"
 if [[ "${DOCKER_INSTALL_PYTHON3,,}" =~ ^(y|yes|1|true)$ ]]; then
@@ -482,6 +482,55 @@ if [[ "${DOCKER_INSTALL_PYTHON3,,}" =~ ^(y|yes|1|true)$ ]]; then
     python3 -V
 else
     echo -e "\033[033mSkipping \033[036mPython3\033[033m install\033[0m"
+fi
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+
+# Slatedocs
+[[ "$DOCKER_INSTALL_SLATE" == "" ]] && export DOCKER_INSTALL_SLATE="no"
+echo -e "DOCKER_INSTALL_SLATE=\033[036m${DOCKER_INSTALL_SLATE}\033[0m"
+if [[ "${DOCKER_INSTALL_SLATE,,}" =~ ^(y|yes|1|true)$ ]]; then
+    echo -e "Installing \033[036mSlate\033[0m"
+    apt-get update -y && apt-get install -y ruby ruby-dev build-essential libffi-dev zlib1g-dev liblzma-dev nodejs patch
+    V_GEM_OK=0
+    gem update --system
+    if [[ $? -eq 0 ]]; then
+        gem install bundler
+        if [[ $? -eq 0 ]]; then
+            V_GEM_OK=1
+        fi
+    fi
+    if [[ $V_GEM_OK -eq 0 ]]; then
+        echo -e "\033[033mInstall using gem failed, trying bundler\033[0m"
+        apt-get install -y bundler
+    fi
+    mkdir /slate
+    chmod 0775 /slate
+    chown docker:docker /slate
+    su -c "git clone git@github.com:slatedocs/slate.git /slate/" docker
+    if [[ -d /slate/.git ]]; then
+        rm -rf /slate/.git
+    fi
+    if [[ -d /slate/source ]]; then
+        rm -rf /slate/source
+    fi
+    V_PWD=$( pwd )
+    cd /slate
+    su -c "bundle config set --local path 'vendor/bundle'" docker
+    su -c "bundle install" docker
+    su -c "npm install" docker
+    echo '#!/usr/bin/env bash' > /usr/local/bin/slate
+    echo 'CUSTOM_SOURCE="$1"' >> /usr/local/bin/slate
+    echo 'CUSTOM_OUTPUT="$2"' >> /usr/local/bin/slate
+    echo 'if [[ -d "$CUSTOM_SOURCE" ]]; then' >> /usr/local/bin/slate
+    echo '    ln -sf "$CUSTOM_SOURCE" /slate/source' >> /usr/local/bin/slate
+    echo 'fi' >> /usr/local/bin/slate
+    echo 'cd /slate' >> /usr/local/bin/slate
+    echo 'bundle exec middleman build --build-dir="$CUSTOM_OUTPUT"' >> /usr/local/bin/slate
+    echo 'exit 0' >> /usr/local/bin/slate
+    chmod +x /usr/local/bin/slate
+    cd "$V_PWD"
+else
+    echo -e "\033[033mSkipping \033[036mSlate\033[033m install\033[0m"
 fi
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
