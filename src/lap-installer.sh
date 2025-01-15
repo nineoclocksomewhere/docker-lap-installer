@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.48"
+V_SCRIPT_VERSION="1.0.49"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -491,6 +491,10 @@ echo -e "DOCKER_INSTALL_SLATE=\033[036m${DOCKER_INSTALL_SLATE}\033[0m"
 if [[ "${DOCKER_INSTALL_SLATE,,}" =~ ^(y|yes|1|true)$ ]]; then
     echo -e "Installing \033[036mSlate\033[0m"
     apt-get update -y && apt-get install -y ruby ruby-dev build-essential libffi-dev zlib1g-dev liblzma-dev nodejs patch bundler
+    if [[ -d /slate ]]; then
+        echo "Removing old /slate directory"
+        rm -rf /slate
+    fi
     mkdir /slate
     chmod 0775 /slate
     chown docker:docker /slate
@@ -508,12 +512,12 @@ if [[ "${DOCKER_INSTALL_SLATE,,}" =~ ^(y|yes|1|true)$ ]]; then
     echo '#!/usr/bin/env bash' > /usr/local/bin/slate
     echo 'CUSTOM_SOURCE="$1"' >> /usr/local/bin/slate
     echo 'if [[ ! -d "$CUSTOM_SOURCE" ]]; then' >> /usr/local/bin/slate
-    echo '    echo -e "\033[031mError: invalid source directory provided\033[0m]"' >> /usr/local/bin/slate
+    echo '    echo -e "\033[031mError: invalid source directory provided\033[0m"' >> /usr/local/bin/slate
     echo '    exit 1' >> /usr/local/bin/slate
     echo 'fi' >> /usr/local/bin/slate
     echo 'CUSTOM_OUTPUT="$2"' >> /usr/local/bin/slate
     echo 'if [[ "$CUSTOM_OUTPUT" == "" ]]; then' >> /usr/local/bin/slate
-    echo '    echo -e "\033[031mError: invalid output directory provided\033[0m]"' >> /usr/local/bin/slate
+    echo '    echo -e "\033[031mError: invalid output directory provided\033[0m"' >> /usr/local/bin/slate
     echo '    exit 1' >> /usr/local/bin/slate
     echo 'fi' >> /usr/local/bin/slate
     echo 'if [[ -e /slate/source ]]; then' >> /usr/local/bin/slate
