@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.49"
+V_SCRIPT_VERSION="1.0.50"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -384,7 +384,11 @@ if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
         if [[ -f "composer-setup.php" ]]; then
             echo -e "Composer installer saved as \033[036m$( realpath 'composer-setup.php' )\033[0m"
             echo -e "Running \033[036mcomposer-setup.php\033[0m"
-            php composer-setup.php
+            if [[ "$DOCKER_COMPOSER_VERSION" != "" ]]; then
+                php composer-setup.php --version=$DOCKER_COMPOSER_VERSION
+            else
+                php composer-setup.php
+            fi
             if [[ ! $? -eq 0 ]]; then
                 echo -e "\033[031mError: installing composer failed, aborting\033[0m"
                 exit 1
