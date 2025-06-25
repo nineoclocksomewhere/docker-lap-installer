@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.52"
+V_SCRIPT_VERSION="1.0.53"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -239,13 +239,22 @@ echo -e "DOCKER_INSTALL_PHP_IMAGICK=\033[036m${DOCKER_INSTALL_PHP_IMAGICK}\033[0
 if [[ "${DOCKER_INSTALL_PHP_IMAGICK,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'imagick' | wc -l ) -eq 0 ]]; then
         echo -e "Installing PHP extension \033[036mimagick\033[0m"
-        # apt install apt-transport-https lsb-release ca-certificates curl gnupg2 -y
-        # curl -fsSL https://packages.sury.org/php/apt.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/sury.gpg
-        # echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/php.list
-        # apt update
-        # apt install imagick -y
-        # apt install imagemagick -y
-        # docker-php-ext-configure imagick && docker-php-ext-install -j$(nproc) imagick
+        apt update
+        apt install imagemagick libmagickwand-dev gcc make -y
+        (
+            cd /var/tmp
+            git clone https://github.com/Imagick/imagick.git
+            cd imagick
+            git checkout $(git tag | grep ^3 | sort -V | tail -n 1)
+            phpize
+            ./configure
+            make
+            make install
+            mkdir -p /usr/local/etc/php/conf.d > /dev/null 2>&1
+            echo "extension=imagick.so" | tee /usr/local/etc/php/conf.d/20-imagick.ini
+
+
+        )
     else
         echo -e "PHP extension \033[036mimagick\033[0m already installed"
     fi
