@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.50"
+V_SCRIPT_VERSION="1.0.51"
 
 # First, an introduction
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -229,6 +229,20 @@ if [[ "${DOCKER_INSTALL_PHP_GD,,}" =~ ^(y|yes|1|true)$ ]]; then
         fi
     else
         echo -e "PHP extension \033[036mgd\033[0m already installed"
+    fi
+fi
+
+if [[ "$DOCKER_INSTALL_PHP_IMAGICK" == "" ]]; then
+    export DOCKER_INSTALL_PHP_IMAGICK="yes"
+fi
+echo -e "DOCKER_INSTALL_PHP_IMAGICK=\033[036m${DOCKER_INSTALL_PHP_IMAGICK}\033[0m"
+if [[ "${DOCKER_INSTALL_PHP_IMAGICK,,}" =~ ^(y|yes|1|true)$ ]]; then
+    if [[ $( php -m | grep 'imagick' | wc -l ) -eq 0 ]]; then
+        echo -e "Installing PHP extension \033[036mimagick\033[0m"
+        apt install imagemagick -y
+        docker-php-ext-configure imagick && docker-php-ext-install -j$(nproc) imagick
+    else
+        echo -e "PHP extension \033[036mimagick\033[0m already installed"
     fi
 fi
 
