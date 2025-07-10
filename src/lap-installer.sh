@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.63"
+V_SCRIPT_VERSION="1.0.64"
 
 if [[ ! -d /tmp/docker-boot-www ]]; then
     mkdir /tmp/docker-boot-www
@@ -111,7 +111,7 @@ cat <<EOL > /tmp/docker-boot-www/index.html
       } catch (err) {
         document.getElementById('log-container').textContent = "Unable to load logs. Make sure boot.log is available.";
         clearInterval(window.fetch_timer);
-        setTimeout(location.reload, 3000);
+        setTimeout("location.reload();", 3000);
       }
     }
     window.fetch_timer = setInterval(fetchLogs, 3000);
