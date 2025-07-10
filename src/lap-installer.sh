@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.55"
+V_SCRIPT_VERSION="1.0.56"
 
 if [[ ! -d /tmp/docker-boot-www ]]; then
     mkdir /tmp/docker-boot-www
@@ -97,7 +97,7 @@ cat <<EOL > /tmp/docker-boot-www/index.html
 <body>
   <h1>🛠 Starting the container...</h1>
   <div id="log-container">Loading logs...</div>
-  <div class="footer">Logs update every 5 seconds</div>
+  <div class="footer">Logs update every 2 seconds</div>
   <script>
     async function fetchLogs() {
       try {
@@ -110,7 +110,7 @@ cat <<EOL > /tmp/docker-boot-www/index.html
       }
     }
     fetchLogs();
-    setInterval(fetchLogs, 5000);
+    setInterval(fetchLogs, 2000);
   </script>
 </body>
 </html>
