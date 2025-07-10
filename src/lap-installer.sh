@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.62"
+V_SCRIPT_VERSION="1.0.63"
 
 if [[ ! -d /tmp/docker-boot-www ]]; then
     mkdir /tmp/docker-boot-www
@@ -331,6 +331,9 @@ F_LOG "DOCKER_INSTALL_PHP_IMAGICK=${DOCKER_INSTALL_PHP_IMAGICK}"
 if [[ "${DOCKER_INSTALL_PHP_IMAGICK,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'imagick' | wc -l ) -eq 0 ]]; then
         F_LOG "Installing PHP extension imagick"
+        F_LOG "Updating packages"
+        apt update
+        F_LOG "Installing imagemagick packages"
         apt install imagemagick libmagickwand-dev gcc make -y
         (
             cd /var/tmp
