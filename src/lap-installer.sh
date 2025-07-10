@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.61"
+V_SCRIPT_VERSION="1.0.62"
 
 if [[ ! -d /tmp/docker-boot-www ]]; then
     mkdir /tmp/docker-boot-www
@@ -102,7 +102,7 @@ cat <<EOL > /tmp/docker-boot-www/index.html
     async function fetchLogs() {
       try {
         const res = await fetch('/boot.log', { cache: 'no-store' });
-        if (! res?.ok || (res.status < 200) || (res.status > 299))) {
+        if (! res?.ok || (res.status < 200) || (res.status > 299)) {
             throw new Error("File not found");
         }
         const text = await res.text();
