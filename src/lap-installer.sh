@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.59"
+V_SCRIPT_VERSION="1.0.60"
 
 if [[ ! -d /tmp/docker-boot-www ]]; then
     mkdir /tmp/docker-boot-www
@@ -102,7 +102,8 @@ cat <<EOL > /tmp/docker-boot-www/index.html
     async function fetchLogs() {
       try {
         const res = await fetch('/boot.log', { cache: 'no-store' });
-        if (!res.ok) {
+        if (! res?.ok) {
+            clearInterval(window.fetch_timer);
             setTimeout(location.reload, 3000);
         } else {
             const text = await res.text();
@@ -111,10 +112,12 @@ cat <<EOL > /tmp/docker-boot-www/index.html
         }
       } catch (err) {
         document.getElementById('log-container').textContent = "Unable to load logs. Make sure boot.log is available.";
+        clearInterval(window.fetch_timer);
+        setTimeout(location.reload, 3000);
       }
     }
+    window.fetch_timer = setInterval(fetchLogs, 3000);
     fetchLogs();
-    setInterval(fetchLogs, 3000);
   </script>
 </body>
 </html>
@@ -224,6 +227,7 @@ if [[ -f /etc/locale.gen ]]; then
     sed -i 's/^# *\(de_DE.UTF-8 UTF-8\)/\1/' /etc/locale.gen
 fi
 # Generate locales
+F_LOG "Generating locales"
 locale-gen
 
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
@@ -329,16 +333,19 @@ F_LOG "DOCKER_INSTALL_PHP_IMAGICK=${DOCKER_INSTALL_PHP_IMAGICK}"
 if [[ "${DOCKER_INSTALL_PHP_IMAGICK,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'imagick' | wc -l ) -eq 0 ]]; then
         F_LOG "Installing PHP extension imagick"
-        apt update
         apt install imagemagick libmagickwand-dev gcc make -y
         (
             cd /var/tmp
+            F_LOG "Cloning imagick source repository"
             git clone https://github.com/Imagick/imagick.git
             cd imagick
             git checkout $(git tag | grep ^3 | sort -V | tail -n 1)
             phpize
+            F_LOG "Coniguring imagick"
             ./configure
+            F_LOG "Making imagick"
             make
+            F_LOG "Installing imagick"
             make install
             mkdir -p /usr/local/etc/php/conf.d > /dev/null 2>&1
             echo "extension=imagick.so" | tee /usr/local/etc/php/conf.d/20-imagick.ini
