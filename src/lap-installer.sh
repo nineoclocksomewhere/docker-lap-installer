@@ -97,7 +97,7 @@ cat <<EOL > /tmp/docker-boot-www/index.html
 <body>
   <h1>🛠 Starting the container...</h1>
   <div id="log-container">Loading logs...</div>
-  <div class="footer">Logs update every 2 seconds</div>
+  <div class="footer">Logs update every 3 seconds</div>
   <script>
     async function fetchLogs() {
       try {
