@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.53"
+V_SCRIPT_VERSION="1.0.54"
 
 # First, an introduction
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
-echo -ne "\033[036mLet me introduce myself:\033[0m\n\033[0mI am \033[093m$( whoami )\033[0m, \033[093m"
-echo -ne $(( $( date +%s ) - $( stat -c %W $HOME ) ))
-echo -e "\033[0m seconds old, live at \033[093m${HOME}\033[0m but currently staying at \033[093m$( pwd )\033[0m."
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo  -ne "Let me introduce myself:\nI am $( whoami ), "
+echo  -ne $(( $( date +%s ) - $( stat -c %W $HOME ) ))
+echo  -e " seconds old, live at ${HOME} but currently staying at $( pwd )."
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # We need to be root
 if [[ ! "$( whoami )" == "root" ]]; then
-    echo -e "\033[031mError: this script needs to run as the root user, aborting\033[0m"
-    echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+    echo  -e "Error: this script needs to run as the root user, aborting"
+    echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
     exit 1
 fi
 
@@ -23,51 +23,140 @@ else
     V_CURRENT_VERSION=""
 fi
 if [[ "$V_CURRENT_VERSION" == "$V_SCRIPT_VERSION" ]]; then
-    echo -e "\033[032mInstallation is up-to-date\033[0m (\033[036mv${V_CURRENT_VERSION}\033[0m)"
-    echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+    F_LOG "Installation is up-to-date (v${V_CURRENT_VERSION})"
+    echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
     exit 0
 fi
 
 # Say why we re-check it all
 if [[ ! -f /usr/share/docker/lap-installer.version ]]; then
-    echo -e "\033[033mInstallation never executed for this container, installing \033[036mv${V_SCRIPT_VERSION}\033[033m now\033[0m"
+    F_LOG "Installation never executed for this container, installing v${V_SCRIPT_VERSION} now"
 else
     rm /usr/share/docker/lap-installer.version > /dev/null 2>&1
-    echo -e "\033[033mInstallation outdated (current: \033[091m${V_CURRENT_VERSION}\033[033m, required: \033[092m${V_SCRIPT_VERSION}\033[033m), updating now\033[0m"
+    F_LOG "Installation outdated (current: ${V_CURRENT_VERSION}, required: ${V_SCRIPT_VERSION}), updating now"
 fi
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+
+# Serve maintenance page with busybox temporarily
+F_LOG "Starting the temporary status page"
+if [[ ! -d /tmp/docker-boot-www ]]; then
+    mkdir /tmp/docker-boot-www
+fi
+if [[ -f /tmp/docker-boot-www/boot.log ]]; then
+    rm /tmp/docker-boot-www/boot.log
+fi
+F_LOG() {
+  local V_MSG="$*"
+  local V_LOGFILE="/tmp/docker-boot-www/boot.log"
+  echo  -e "$V_MSG"
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] ${V_MSG}" >> "$V_LOGFILE"
+}
+F_LOG "Booting the container"
+cat <<EOL > /tmp/docker-boot-www/index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="refresh" content="600">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Starting Up...</title>
+  <style>
+    body {
+      margin: 0;
+      background: #1e1e1e;
+      color: #ccc;
+      font-family: "Fira Code", monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2em;
+    }
+    h1 {
+      color: #fff;
+      margin-bottom: 0.5em;
+    }
+    #log-container {
+      background: #121212;
+      border: 1px solid #444;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 960px;
+      height: 400px;
+      overflow-y: auto;
+      padding: 1em;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      white-space: pre-wrap;
+      font-size: .85rem;
+    }
+    .footer {
+      margin-top: 1em;
+      font-size: 0.9em;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>🛠 Starting the container...</h1>
+  <div id="log-container">Loading logs...</div>
+  <div class="footer">Logs update every 5 seconds</div>
+  <script>
+    async function fetchLogs() {
+      try {
+        const res = await fetch('/boot.log', { cache: 'no-store' });
+        const text = await res.text();
+        document.getElementById('log-container').textContent = text;
+        document.getElementById('log-container').scrollTop = document.getElementById('log-container').scrollHeight;
+      } catch (err) {
+        document.getElementById('log-container').textContent = "Unable to load logs. Make sure boot.log is available.";
+      }
+    }
+    fetchLogs();
+    setInterval(fetchLogs, 5000);
+  </script>
+</body>
+</html>
+EOL
+apt-get update
+apt-get -y install busybox
+busybox httpd -f -p 80 -h /tmp/docker-boot-www &
+TEMP_SERVER_PID=$!
+sleep 1
+apt-get -y upgrade
+
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Custom before installer script?
 which lap-installer-before
 if [[ $? -eq 0 ]]; then
+    F_LOG "Running installer before script"
     bash lap-installer-before
     if [[ ! $? -eq 0 ]]; then
-        echo -e "\033[031mError: before installer failed, aborting\033[0m"
+        F_LOG "Error: before installer failed, aborting"
         exit 1
     fi
-    echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+    echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 fi
 
 # User configuration - Part 1/2
-echo -e "Checking \033[036muser\033[0m configuration (Part 1/2)"
+F_LOG "Checking user configuration (Part 1/2)"
 V_GID="${PGID:-1000}"
 V_GROUP="${DOCKER_GROUP_NAME:-docker}"
 V_UID="${PUID:-1000}"
 V_USER="${DOCKER_USER_NAME:-docker}"
 V_SECRET="${DOCKER_USER_SECRET:-secret}"
 if [[ $( getent group $V_GROUP | wc -l ) -eq 0 ]]; then
-    echo -e "Creating group \033[036m${V_GROUP}\033[0m with GID \033[036m${V_GID}\033[0m"
+    F_LOG "Creating group ${V_GROUP} with GID ${V_GID}"
     groupadd -g $V_GID -o $V_GROUP
 else
-    echo -e "Group \033[036m${V_GROUP}\033[0m already exists"
+    F_LOG "Group ${V_GROUP} already exists"
 fi
 getent group $V_GROUP
 V_BASHRC_CREATED=0
 if id "$V_USER" &>/dev/null; then
-    echo -e "User \033[036m${V_USER}\033[0m already exists"
+    F_LOG "User ${V_USER} already exists"
     V_USER_CREATED=0
 else
-    echo -e "Creating user \033[036m${V_USER}\033[0m with UID \033[036m${V_UID}\033[0m"
+    F_LOG "Creating user ${V_USER} with UID ${V_UID}"
     useradd -u $V_UID -g $V_GROUP -s /bin/bash $V_USER
     # Why not using the -m parameter above?
     # -> The docker's home folder could already be created as mounted volume, so we check it later.
@@ -76,16 +165,14 @@ else
     usermod -d /home/$V_USER $V_USER
     V_USER_CREATED=1
 fi
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Basic packages
-echo -e "Verifying if \033[036mall basic packages\033[0m are installed"
+F_LOG "Verifying if all basic packages are installed"
 # https://askubuntu.com/a/1500085
 if [[ -d /var/lib/dpkg/updates ]]; then
     rm /var/lib/dpkg/updates/*
 fi
-apt-get update
-apt-get -y upgrade
 apt-get install -y \
     coreutils \
     libfreetype6-dev \
@@ -117,11 +204,11 @@ apt-get install -y \
     memcached \
     libmemcached-dev \
     pv
-echo -e "\033[032mDone\033[0m"
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+F_LOG "Done"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Locales
-echo -e "Installing and updating \033[036mlocales\033[0m"
+F_LOG "Installing and updating locales"
 # Install locales package
 apt-get install -y locales
 # Uncomment locales for inclusion in generation
@@ -136,55 +223,55 @@ fi
 # Generate locales
 locale-gen
 
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # WKHTMLTOPDF
 [[ "$DOCKER_INSTALL_WKHTMLTOPDF" == "" ]] && export DOCKER_INSTALL_WKHTMLTOPDF="no"
-echo -e "DOCKER_INSTALL_WKHTMLTOPDF=\033[036m${DOCKER_INSTALL_WKHTMLTOPDF}\033[036m"
+F_LOG "DOCKER_INSTALL_WKHTMLTOPDF=${DOCKER_INSTALL_WKHTMLTOPDF}"
 if [[ "${DOCKER_INSTALL_WKHTMLTOPDF,,}" =~ ^(y|yes|1|true)$ ]]; then
-    echo -e "Installing \033[036mwkhtmltopdf\033[0m"
+    F_LOG "Installing wkhtmltopdf"
     apt-get install -y \
         wkhtmltopdf
 else
-    echo -e "\033[033mSkipping \033[036mwkhtmltopdf\033[033m install\033[0m"
+    F_LOG "Skipping wkhtmltopdf install"
 fi
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Image Optimizers
 [[ "$DOCKER_INSTALL_IMAGE_OPTIMIZERS" == "" ]] && export DOCKER_INSTALL_IMAGE_OPTIMIZERS="yes"
-echo -e "DOCKER_INSTALL_IMAGE_OPTIMIZERS=\033[036m${DOCKER_INSTALL_IMAGE_OPTIMIZERS}\033[036m"
+F_LOG "DOCKER_INSTALL_IMAGE_OPTIMIZERS=${DOCKER_INSTALL_IMAGE_OPTIMIZERS}"
 if [[ "${DOCKER_INSTALL_IMAGE_OPTIMIZERS,,}" =~ ^(y|yes|1|true)$ ]]; then
-    echo -e "Installing \033[036mImage Optimizers\033[0m"
+    F_LOG "Installing Image Optimizers"
     apt-get install -y \
         jpegoptim \
         gifsicle \
         optipng \
         pngquant
 else
-    echo -e "\033[033mSkipping \033[036mImage Optimizers\033[033m install\033[0m"
+    F_LOG "Skipping Image Optimizers install"
 fi
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # PHP extensions list: https:/127.0.0.1/github.com/mlocati/docker-php-extension-installer#supported-php-extensions
 V_PHP_MAJOR_VERSION=$( php -r "echo explode('.', phpversion())[0];" )
 V_PHP_MAJOR_VERSION=$(( $V_PHP_MAJOR_VERSION * 1 ))
-echo -e "PHP major version: \033[036m${V_PHP_MAJOR_VERSION}\033[0m"
+F_LOG "PHP major version: ${V_PHP_MAJOR_VERSION}"
 V_PHP_MINOR_VERSION=$( php -r "echo explode('.', phpversion())[1];" )
 V_PHP_MINOR_VERSION=$(( $V_PHP_MINOR_VERSION * 1 ))
-echo -e "PHP minor version: \033[036m${V_PHP_MINOR_VERSION}\033[0m"
+F_LOG "PHP minor version: ${V_PHP_MINOR_VERSION}"
 echo
 
-echo -e "Checking \033[036mPHP extensions\033[0m"
+F_LOG "Checking PHP extensions"
 if [[ $( php -m | grep 'zip' | wc -l ) -eq 0 ]]; then
-    echo -e "Installing PHP extension \033[036mzip\033[0m"
+    F_LOG "Installing PHP extension zip"
     docker-php-ext-configure zip --with-libzip
     docker-php-ext-install -j$(nproc) zip
 else
-    echo -e "PHP extension \033[036mzip\033[0m already installed"
+    F_LOG "PHP extension zip already installed"
 fi
 
 if [[ $( php -m | grep 'memcached' | wc -l ) -eq 0 ]]; then
-    echo -e "Installing PHP extension \033[036mmemcached\033[0m"
+    F_LOG "Installing PHP extension memcached"
     # ref: https://bobcares.com/blog/docker-php-ext-install-memcached/
     # ref: https://github.com/php-memcached-dev/php-memcached/issues/408
     if [[ $V_PHP_MAJOR_VERSION -eq 7 ]]; then
@@ -199,46 +286,46 @@ if [[ $( php -m | grep 'memcached' | wc -l ) -eq 0 ]]; then
             && docker-php-ext-install $MEMCACHED
     fi
 else
-    echo -e "PHP extension \033[036mmemcached\033[0m already installed"
+    F_LOG "PHP extension memcached already installed"
 fi
 
 if [[ "$DOCKER_INSTALL_PHP_BCMATH" == "" ]]; then
     export DOCKER_INSTALL_PHP_BCMATH="no"
 fi
-echo -e "DOCKER_INSTALL_PHP_BCMATH=\033[036m${DOCKER_INSTALL_PHP_BCMATH}\033[0m"
+F_LOG "DOCKER_INSTALL_PHP_BCMATH=${DOCKER_INSTALL_PHP_BCMATH}"
 if [[ "${DOCKER_INSTALL_PHP_BCMATH,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'bcmath' | wc -l ) -eq 0 ]]; then
-        echo -e "Installing PHP extension \033[036mbcmath\033[0m"
+        F_LOG "Installing PHP extension bcmath"
         docker-php-ext-install -j$(nproc) bcmath
     else
-        echo -e "PHP extension \033[036mbcmath\033[0m already installed"
+        F_LOG "PHP extension bcmath already installed"
     fi
 fi
 
 if [[ "$DOCKER_INSTALL_PHP_GD" == "" ]]; then
     export DOCKER_INSTALL_PHP_GD="yes"
 fi
-echo -e "DOCKER_INSTALL_PHP_GD=\033[036m${DOCKER_INSTALL_PHP_GD}\033[0m"
+F_LOG "DOCKER_INSTALL_PHP_GD=${DOCKER_INSTALL_PHP_GD}"
 if [[ "${DOCKER_INSTALL_PHP_GD,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'gd' | wc -l ) -eq 0 ]]; then
-        echo -e "Installing PHP extension \033[036mgd\033[0m"
+        F_LOG "Installing PHP extension gd"
         if [[ $V_PHP_MAJOR_VERSION -eq 7 && $V_PHP_MINOR_VERSION -le 3 ]]; then
             docker-php-ext-configure gd --with-freetype-dir=/usr/lib --with-png-dir=/usr/lib --with-jpeg-dir=/usr/lib && docker-php-ext-install -j$(nproc) gd
         else
             docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && docker-php-ext-install -j$(nproc) gd
         fi
     else
-        echo -e "PHP extension \033[036mgd\033[0m already installed"
+        F_LOG "PHP extension gd already installed"
     fi
 fi
 
 if [[ "$DOCKER_INSTALL_PHP_IMAGICK" == "" ]]; then
     export DOCKER_INSTALL_PHP_IMAGICK="yes"
 fi
-echo -e "DOCKER_INSTALL_PHP_IMAGICK=\033[036m${DOCKER_INSTALL_PHP_IMAGICK}\033[0m"
+F_LOG "DOCKER_INSTALL_PHP_IMAGICK=${DOCKER_INSTALL_PHP_IMAGICK}"
 if [[ "${DOCKER_INSTALL_PHP_IMAGICK,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'imagick' | wc -l ) -eq 0 ]]; then
-        echo -e "Installing PHP extension \033[036mimagick\033[0m"
+        F_LOG "Installing PHP extension imagick"
         apt update
         apt install imagemagick libmagickwand-dev gcc make -y
         (
@@ -256,214 +343,214 @@ if [[ "${DOCKER_INSTALL_PHP_IMAGICK,,}" =~ ^(y|yes|1|true)$ ]]; then
 
         )
     else
-        echo -e "PHP extension \033[036mimagick\033[0m already installed"
+        F_LOG "PHP extension imagick already installed"
     fi
 fi
 
 if [[ "$DOCKER_INSTALL_PHP_PDO_MYSQL" == "" ]]; then
     export DOCKER_INSTALL_PHP_PDO_MYSQL="yes"
 fi
-echo -e "DOCKER_INSTALL_PHP_PDO_MYSQL=\033[036m${DOCKER_INSTALL_PHP_PDO_MYSQL}\033[0m"
+F_LOG "DOCKER_INSTALL_PHP_PDO_MYSQL=${DOCKER_INSTALL_PHP_PDO_MYSQL}"
 if [[ "${DOCKER_INSTALL_PHP_PDO_MYSQL,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'pdo_mysql' | wc -l ) -eq 0 ]]; then
-        echo -e "Installing PHP extension \033[036mpdo_mysql\033[0m"
+        F_LOG "Installing PHP extension pdo_mysql"
         docker-php-ext-install -j$(nproc) pdo_mysql
     else
-        echo -e "PHP extension \033[036mpdo_mysql\033[0m already installed"
+        F_LOG "PHP extension pdo_mysql already installed"
     fi
 fi
 
 if [[ "$DOCKER_INSTALL_PHP_MYSQLI" == "" ]]; then
     export DOCKER_INSTALL_PHP_MYSQLI="yes"
 fi
-echo -e "DOCKER_INSTALL_PHP_MYSQLI=\033[036m${DOCKER_INSTALL_PHP_MYSQLI}\033[0m"
+F_LOG "DOCKER_INSTALL_PHP_MYSQLI=${DOCKER_INSTALL_PHP_MYSQLI}"
 if [[ "${DOCKER_INSTALL_PHP_MYSQLI,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'mysqli' | wc -l ) -eq 0 ]]; then
-        echo -e "Installing PHP extension \033[036mmysqli\033[0m"
+        F_LOG "Installing PHP extension mysqli"
         docker-php-ext-install -j$(nproc) mysqli
     else
-        echo -e "PHP extension \033[036mmysqli\033[0m already installed"
+        F_LOG "PHP extension mysqli already installed"
     fi
 fi
 
 if [[ "$DOCKER_INSTALL_PHP_EXIF" == "" ]]; then
     export DOCKER_INSTALL_PHP_EXIF="yes"
 fi
-echo -e "DOCKER_INSTALL_PHP_EXIF=\033[036m${DOCKER_INSTALL_PHP_EXIF}\033[0m"
+F_LOG "DOCKER_INSTALL_PHP_EXIF=${DOCKER_INSTALL_PHP_EXIF}"
 if [[ "${DOCKER_INSTALL_PHP_EXIF,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'exif' | wc -l ) -eq 0 ]]; then
-        echo -e "Installing PHP extension \033[036mexif\033[0m"
+        F_LOG "Installing PHP extension exif"
         docker-php-ext-install -j$(nproc) exif
     else
-        echo -e "PHP extension \033[036mexif\033[0m already installed"
+        F_LOG "PHP extension exif already installed"
     fi
 fi
 
 if [[ "$DOCKER_INSTALL_PHP_INTL" == "" ]]; then
     export DOCKER_INSTALL_PHP_INTL="yes"
 fi
-echo -e "DOCKER_INSTALL_PHP_INTL=\033[036m${DOCKER_INSTALL_PHP_INTL}\033[0m"
+F_LOG "DOCKER_INSTALL_PHP_INTL=${DOCKER_INSTALL_PHP_INTL}"
 if [[ "${DOCKER_INSTALL_PHP_INTL,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'intl' | wc -l ) -eq 0 ]]; then
-        echo -e "Installing PHP extension \033[036mintl\033[0m"
+        F_LOG "Installing PHP extension intl"
         docker-php-ext-install -j$(nproc) intl
     else
-        echo -e "PHP extension \033[036mintl\033[0m already installed"
+        F_LOG "PHP extension intl already installed"
     fi
 fi
 
 if [[ "$DOCKER_INSTALL_PHP_SOCKETS" == "" ]]; then
     export DOCKER_INSTALL_PHP_SOCKETS="yes"
 fi
-echo -e "DOCKER_INSTALL_PHP_SOCKETS=\033[036m${DOCKER_INSTALL_PHP_SOCKETS}\033[0m"
+F_LOG "DOCKER_INSTALL_PHP_SOCKETS=${DOCKER_INSTALL_PHP_SOCKETS}"
 if [[ "${DOCKER_INSTALL_PHP_SOCKETS,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'sockets' | wc -l ) -eq 0 ]]; then
-        echo -e "Installing PHP extension \033[036msockets\033[0m"
+        F_LOG "Installing PHP extension sockets"
         docker-php-ext-install -j$(nproc) sockets
     else
-        echo -e "PHP extension \033[036msockets\033[0m already installed"
+        F_LOG "PHP extension sockets already installed"
     fi
 fi
 
 if [[ "$DOCKER_INSTALL_PHP_SOAP" == "" ]]; then
     export DOCKER_INSTALL_PHP_SOAP="no"
 fi
-echo -e "DOCKER_INSTALL_PHP_SOAP=\033[036m${DOCKER_INSTALL_PHP_SOAP}\033[0m"
+F_LOG "DOCKER_INSTALL_PHP_SOAP=${DOCKER_INSTALL_PHP_SOAP}"
 if [[ "${DOCKER_INSTALL_PHP_SOAP,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'soap' | wc -l ) -eq 0 ]]; then
-        echo -e "Installing PHP extension \033[036msoap\033[0m"
+        F_LOG "Installing PHP extension soap"
         docker-php-ext-install -j$(nproc) soap
     else
-        echo -e "PHP extension \033[036msoap\033[0m already installed"
+        F_LOG "PHP extension soap already installed"
     fi
 fi
 
 if [[ "$DOCKER_INSTALL_PHP_SODIUM" == "" ]]; then
     export DOCKER_INSTALL_PHP_SODIUM="no"
 fi
-echo -e "DOCKER_INSTALL_PHP_SODIUM=\033[036m${DOCKER_INSTALL_PHP_SODIUM}\033[0m"
+F_LOG "DOCKER_INSTALL_PHP_SODIUM=${DOCKER_INSTALL_PHP_SODIUM}"
 if [[ "${DOCKER_INSTALL_PHP_SODIUM,,}" =~ ^(y|yes|1|true)$ ]]; then
     if [[ $( php -m | grep 'sodium' | wc -l ) -eq 0 ]]; then
-        echo -e "Installing PHP extension \033[036msodium\033[0m"
+        F_LOG "Installing PHP extension sodium"
         docker-php-ext-install -j$(nproc) sodium
     else
-        echo -e "PHP extension \033[036msodium\033[0m already installed"
+        F_LOG "PHP extension sodium already installed"
     fi
 fi
 
-echo -e "\n\033[032mDone\033[0m"
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+F_LOG "\nDone"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Apache mods
-echo -e "Checking \033[036mapache mods\033[0m"
+F_LOG "Checking apache mods"
 if [[ ! -e /etc/apache2/mods-enabled/rewrite.load ]]; then
     a2enmod rewrite
 fi
 if [[ ! -e /etc/apache2/mods-enabled/headers.load ]]; then
     a2enmod headers
 fi
-echo -e "\033[032mDone\033[0m"
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+F_LOG "Done"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # User configuration - Part 2/2
-echo -e "Checking \033[036muser\033[0m configuration (Part 2/2)"
+F_LOG "Checking user configuration (Part 2/2)"
 if [[ $V_USER_CREATED -eq 1 ]]; then
     usermod -a -G sudo $V_USER
     usermod -a -G www-data $V_USER
     if [[ ! -f /home/$V_USER/.bashrc ]]; then
-        echo -e "Creating \033[036m/home/$V_USER/.bashrc\033[0m"
+        F_LOG "Creating /home/$V_USER/.bashrc"
         touch /home/$V_USER/.bashrc
         V_BASHRC_CREATED=1
     fi
     if [[ -f /home/$V_USER/.bashrc ]]; then
-        echo -e "Setting owner \033[036m${V_USER}:${V_GROUP}\033[0m to file \033[036m/home/${V_USER}/.bashrc\033[0m"
+        F_LOG "Setting owner ${V_USER}:${V_GROUP} to file /home/${V_USER}/.bashrc"
         chown $V_USER:$V_GROUP /home/$V_USER/.bashrc
     fi
     echo "${V_USER}:${V_SECRET}" > /tmp/passwd.txt; chpasswd < /tmp/passwd.txt; shred -n 5 /tmp/passwd.txt; rm /tmp/passwd.txt
 fi
 if [[ -d /home/$V_USER/.ssh ]]; then
-    echo -e "Setting owner \033[036m${V_USER}:${V_GROUP}\033[0m to directory \033[036m/home/${V_USER}/.ssh\033[0m"
+    F_LOG "Setting owner ${V_USER}:${V_GROUP} to directory /home/${V_USER}/.ssh"
     chown $V_USER:$V_GROUP /home/$V_USER/.ssh
 fi
-echo -e "Showing id of user \033[036m$V_USER\033[0m"
+F_LOG "Showing id of user $V_USER"
 id -u "$V_USER"
-echo -e "Showing contents of \033[036m/home/$V_USER\033[0m"
+F_LOG "Showing contents of /home/$V_USER"
 ls -la /home/$V_USER
 V_USER_PATH=$( su - docker -c ". ~/.bashrc; echo \$PATH" )
-echo -e "\033[036m${V_USER}\033[0m's \$PATH is \033[036m/home/${V_USER_PATH}\033[0m"
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+F_LOG "${V_USER}'s \$PATH is /home/${V_USER_PATH}"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Composer
 [[ "$DOCKER_INSTALL_COMPOSER" == "" ]] && export DOCKER_INSTALL_COMPOSER="yes"
-echo -e "DOCKER_INSTALL_COMPOSER=\033[036m${DOCKER_INSTALL_COMPOSER}\033[0m"
+F_LOG "DOCKER_INSTALL_COMPOSER=${DOCKER_INSTALL_COMPOSER}"
 if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
-    echo -e "Installing \033[036mComposer\033[0m"
-    echo -e "Checking if \033[036mcomposer\033[0m is installed"
+    F_LOG "Installing Composer"
+    F_LOG "Checking if composer is installed"
     if [[ -f /usr/local/bin/composer ]]; then
-        echo -e "\033[032mInstalled\033[0m"
+        F_LOG "Installed"
     else
-        echo -e "\033[036mNot installed\033[0m, installing now"
+        F_LOG "Not installed, installing now"
         # Prepare a composer installer directory
         mkdir /tmp/composer-installer && cd /tmp/composer-installer
         # https://getcomposer.org/download/
         V_COMPOSER_HASH=$( curl https://composer.github.io/installer.sig )
         php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-        php -r "if (hash_file('sha384', 'composer-setup.php') === '${V_COMPOSER_HASH}') { echo \"\\033[032mComposer installer verified\\033[0m\".PHP_EOL; } else { echo \"\\033[031mComposer installer corrupt\\033[0m\".PHP_EOL; unlink('composer-setup.php'); if (file_exists('composer-setup.php')) { echo \"\\033[031mRemoving \".realpath('composer-setup.php').\" failed\\033[0m\".PHP_EOL; } }"
+        php -r "if (hash_file('sha384', 'composer-setup.php') === '${V_COMPOSER_HASH}') { echo \"Composer installer verified\".PHP_EOL; } else { echo \"Composer installer corrupt\".PHP_EOL; unlink('composer-setup.php'); if (file_exists('composer-setup.php')) { echo \"Removing \".realpath('composer-setup.php').\" failed\".PHP_EOL; } }"
         if [[ -f "composer-setup.php" ]]; then
-            echo -e "Composer installer saved as \033[036m$( realpath 'composer-setup.php' )\033[0m"
-            echo -e "Running \033[036mcomposer-setup.php\033[0m"
+            F_LOG "Composer installer saved as $( realpath 'composer-setup.php' )"
+            F_LOG "Running composer-setup.php"
             if [[ "$DOCKER_COMPOSER_VERSION" != "" ]]; then
                 php composer-setup.php --version=$DOCKER_COMPOSER_VERSION
             else
                 php composer-setup.php
             fi
             if [[ ! $? -eq 0 ]]; then
-                echo -e "\033[031mError: installing composer failed, aborting\033[0m"
+                F_LOG "Error: installing composer failed, aborting"
                 exit 1
             fi
-            echo -e "Removing \033[036mcomposer-setup.php\033[0m"
-            php -r "unlink('composer-setup.php'); if (file_exists('composer-setup.php')) { echo \"\\033[031mRemoving \".realpath('composer-setup.php').\" failed\\033[0m\".PHP_EOL; }"
+            F_LOG "Removing composer-setup.php"
+            php -r "unlink('composer-setup.php'); if (file_exists('composer-setup.php')) { echo \"Removing \".realpath('composer-setup.php').\" failed\".PHP_EOL; }"
             if [[ -f composer.phar ]]; then
                 chmod +x composer.phar
                 if [[ ! -d /usr/local/bin ]]; then
                     mkdir -p /usr/local/bin
                 fi
-                echo -e "Moving \033[036m$( realpath composer.phar )\033[0m to \033[036m/usr/local/bin/composer\033[0m"
+                F_LOG "Moving $( realpath composer.phar ) to /usr/local/bin/composer"
                 mv -f composer.phar /usr/local/bin/composer
-                echo -e "Cleaning up the composer installer"
+                F_LOG "Cleaning up the composer installer"
                 cd && rm -rf /tmp/composer-installer
             else
-                echo -e "\033[031mError: composer.phar not found, aborting\033[0m"
+                F_LOG "Error: composer.phar not found, aborting"
                 exit 1
             fi
         else
-            echo -e "\033[031mError: installing composer failed, aborting\033[0m"
+            F_LOG "Error: installing composer failed, aborting"
             exit 1
         fi
         if [[ -f /usr/local/bin/composer ]]; then
-            echo -e "\033[036mComposer\033[0m is now \033[032minstalled\033[0m!"
+            F_LOG "Composer is now installed!"
         else
-            echo -e "\033[031mError: installing composer failed, aborting\033[0m"
+            F_LOG "Error: installing composer failed, aborting"
             exit 1
         fi
     fi
 else
-    echo -e "\033[033mSkipping \033[036mComposer\033[033m install\033[0m"
+    F_LOG "Skipping Composer install"
 fi
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # NodeJS
 [[ "$DOCKER_INSTALL_NODEJS" == "" ]] && export DOCKER_INSTALL_NODEJS="no"
-echo -e "DOCKER_INSTALL_NODEJS=\033[036m${DOCKER_INSTALL_NODEJS}\033[0m"
+F_LOG "DOCKER_INSTALL_NODEJS=${DOCKER_INSTALL_NODEJS}"
 if [[ "${DOCKER_INSTALL_NODEJS,,}" =~ ^(y|yes|1|true)$ ]]; then
-    echo -e "Installing \033[036mNodeJS\033[0m"
+    F_LOG "Installing NodeJS"
     V_NODE_USER="${V_USER}"
     if [[ $( su $V_NODE_USER -p -c "which npm" | wc -l ) -eq 0 && ! -d $HOME/.nvm ]]; then
-        echo -e "\033[033mNo \033[036mModeJS\033[033m installed for user \033[036m${V_NODE_USER}\033[033m, installing now\033[0m"
+        F_LOG "No ModeJS installed for user ${V_NODE_USER}, installing now"
         su $V_NODE_USER -p -c "echo; \
-            echo -e \"While I am installing \033[036mnode\033[0m I am user \033[036m\$( whoami )\033[0m (\033[032m\$UID\033[0m).\"; \
+            echo -e \"While I am installing node I am user \$( whoami ) (\$UID).\"; \
             if [[ \$( whoami ) == \"root\" ]]; then export HOME=\"/root\"; else export HOME=\"/home/\$( whoami )\"; fi; \
-            echo -e \"I just made sure my home directory is \033[036m\$HOME\033[0m.\"; \
+            echo -e \"I just made sure my home directory is \$HOME.\"; \
             if [[ -f ~/.bashrc && $( cat ~/.bashrc | grep 'export HOME=' | wc -l ) -eq 0 ]]; then echo \"export HOME=\\\"\$HOME\\\"\" >> ~/.bashrc; fi; \
             export NODE_VERSION=\"18.17.1\"; \
             if [[ -f ~/.bashrc && $( cat ~/.bashrc | grep 'export NODE_VERSION=' | wc -l ) -eq 0 ]]; then echo \"export NODE_VERSION=\\\"\$NODE_VERSION\\\"\" >> ~/.bashrc; fi; \
@@ -473,19 +560,19 @@ if [[ "${DOCKER_INSTALL_NODEJS,,}" =~ ^(y|yes|1|true)$ ]]; then
             export PATH=\"\$NVM_DIR/versions/node/v\$NODE_VERSION/bin:\$PATH\"; \
             if [[ -f ~/.bashrc && $( cat ~/.bashrc | grep 'export PATH=' | grep '/node'/ | wc -l ) -eq 0 ]]; then echo \"export PATH=\\\"\$PATH\\\"\" >> ~/.bashrc; fi; \
             echo \"Some exports I will use now are:\"; \
-            echo -e \"NODE_VERSION: \033[036m\$NODE_VERSION\033[0m\"; \
-            echo -e \"NVM_DIR: \033[036m\$NVM_DIR\033[0m\"; \
-            echo -e \"NODE_PATH: \033[036m\$NODE_PATH\033[0m\"; \
-            echo -e \"PATH: \033[036m\$PATH\033[0m\"; \
+            echo -e \"NODE_VERSION: \$NODE_VERSION\"; \
+            echo -e \"NVM_DIR: \$NVM_DIR\"; \
+            echo -e \"NODE_PATH: \$NODE_PATH\"; \
+            echo -e \"PATH: \$PATH\"; \
             if [[ ! -d \"\$NVM_DIR\" ]]; then mkdir -p \"\$NVM_DIR\"; fi; \
             echo; \
-            echo -e \"Downloading the \033[036mnvm installer script\033[0m\"; \
+            echo -e \"Downloading the nvm installer script\"; \
             curl --silent -o- https://raw.githubusercontent.com/creationix/nvm/v0.39.3/install.sh | bash; \
-            echo -e \"\033[036mnvm installer script\033[0m downloaded\"; \
+            echo -e \"nvm installer script downloaded\"; \
             [[ -s \"\$NVM_DIR/nvm.sh\" ]] && \. \"\$NVM_DIR/nvm.sh\"; \
             [[ -s \"\$NVM_DIR/bash_completion\" ]] && \. \"\$NVM_DIR/bash_completion\"; \
             echo; \
-            echo -e -n \"\033[036m\$NVM_DIR/nvm.sh\033[0m exists: \033[036m\" && ( ls -1a \"\$NVM_DIR/\" | grep \"nvm.sh\" | wc -l ) && echo -e -n \"\033[0m\"; \
+            echo -e -n \"\$NVM_DIR/nvm.sh exists: \" && ( ls -1a \"\$NVM_DIR/\" | grep \"nvm.sh\" | wc -l ) && echo -e -n \"\"; \
             source \$NVM_DIR/nvm.sh; \
             echo; \
             nvm install \$NODE_VERSION; \
@@ -494,34 +581,34 @@ if [[ "${DOCKER_INSTALL_NODEJS,,}" =~ ^(y|yes|1|true)$ ]]; then
             npm install -g npm@latest; \
             npm install -g svgo"
         if [[ ! $? -eq 0 ]]; then
-            echo -e "\033[031mError: installing node failed, aborting\033[0m"
+            F_LOG "Error: installing node failed, aborting"
             exit 1
         fi
     else
-        echo -e "\033[036mModeJS\033[0m already \033[032minstalled\033[0m for user \033[036m$( whoami )\033[0m"
+        F_LOG "ModeJS already installed for user $( whoami )"
     fi
 else
-    echo -e "\033[033mSkipping \033[036mModeJS\033[033m install\033[0m"
+    F_LOG "Skipping ModeJS install"
 fi
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Python
 [[ "$DOCKER_INSTALL_PYTHON3" == "" ]] && export DOCKER_INSTALL_PYTHON3="yes"
-echo -e "DOCKER_INSTALL_PYTHON3=\033[036m${DOCKER_INSTALL_PYTHON3}\033[0m"
+F_LOG "DOCKER_INSTALL_PYTHON3=${DOCKER_INSTALL_PYTHON3}"
 if [[ "${DOCKER_INSTALL_PYTHON3,,}" =~ ^(y|yes|1|true)$ ]]; then
-    echo -e "Installing \033[036mPython3\033[0m"
+    F_LOG "Installing Python3"
     apt-get update && apt-get install -y python3
     python3 -V
 else
-    echo -e "\033[033mSkipping \033[036mPython3\033[033m install\033[0m"
+    F_LOG "Skipping Python3 install"
 fi
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Slatedocs
 [[ "$DOCKER_INSTALL_SLATE" == "" ]] && export DOCKER_INSTALL_SLATE="no"
-echo -e "DOCKER_INSTALL_SLATE=\033[036m${DOCKER_INSTALL_SLATE}\033[0m"
+F_LOG "DOCKER_INSTALL_SLATE=${DOCKER_INSTALL_SLATE}"
 if [[ "${DOCKER_INSTALL_SLATE,,}" =~ ^(y|yes|1|true)$ ]]; then
-    echo -e "Installing \033[036mSlate\033[0m"
+    F_LOG "Installing Slate"
     apt-get update -y && apt-get install -y ruby ruby-dev build-essential libffi-dev zlib1g-dev liblzma-dev nodejs patch bundler
     if [[ -d /slate ]]; then
         echo "Removing old /slate directory"
@@ -544,12 +631,12 @@ if [[ "${DOCKER_INSTALL_SLATE,,}" =~ ^(y|yes|1|true)$ ]]; then
     echo '#!/usr/bin/env bash' > /usr/local/bin/slate
     echo 'CUSTOM_SOURCE="$1"' >> /usr/local/bin/slate
     echo 'if [[ ! -d "$CUSTOM_SOURCE" ]]; then' >> /usr/local/bin/slate
-    echo '    echo -e "\033[031mError: invalid source directory provided\033[0m"' >> /usr/local/bin/slate
+    echo '    echo -e "Error: invalid source directory provided"' >> /usr/local/bin/slate
     echo '    exit 1' >> /usr/local/bin/slate
     echo 'fi' >> /usr/local/bin/slate
     echo 'CUSTOM_OUTPUT="$2"' >> /usr/local/bin/slate
     echo 'if [[ "$CUSTOM_OUTPUT" == "" ]]; then' >> /usr/local/bin/slate
-    echo '    echo -e "\033[031mError: invalid output directory provided\033[0m"' >> /usr/local/bin/slate
+    echo '    echo -e "Error: invalid output directory provided"' >> /usr/local/bin/slate
     echo '    exit 1' >> /usr/local/bin/slate
     echo 'fi' >> /usr/local/bin/slate
     echo 'if [[ -e /slate/source ]]; then' >> /usr/local/bin/slate
@@ -569,99 +656,106 @@ if [[ "${DOCKER_INSTALL_SLATE,,}" =~ ^(y|yes|1|true)$ ]]; then
     chmod +x /usr/local/bin/slate
     cd "$V_PWD"
 else
-    echo -e "\033[033mSkipping \033[036mSlate\033[033m install\033[0m"
+    F_LOG "Skipping Slate install"
 fi
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Laravel
 [[ "$DOCKER_INSTALL_LARAVEL" == "" ]] && export DOCKER_INSTALL_LARAVEL="no"
-echo -e "DOCKER_INSTALL_LARAVEL=\033[036m${DOCKER_INSTALL_LARAVEL}\033[0m"
+F_LOG "DOCKER_INSTALL_LARAVEL=${DOCKER_INSTALL_LARAVEL}"
 if [[ "${DOCKER_INSTALL_LARAVEL,,}" =~ ^(y|yes|1|true)$ ]]; then
-    echo -e "Checking if the \033[036mlaravel installer\033[0m is installed"
+    F_LOG "Checking if the laravel installer is installed"
     V_LARAVEL_BIN="/usr/local/bin/laravel"
     if [[ -e "$V_LARAVEL_BIN" ]]; then
-        echo -e "\033[032mInstalled\033[0m"
+        F_LOG "Installed"
     else
-        echo -e "Installing the \033[036mlaravel installer\033[0m for user \033[036${V_USER}\033[0m"
+        F_LOG "Installing the laravel installer for user \033[036${V_USER}"
         V_LARAVEL_BIN_COMPOSER="/home/${V_USER}/.composer/vendor/laravel/installer/bin/laravel"
         V_LARAVEL_BIN_CONFIG="/home/${V_USER}/.config/composer/vendor/laravel/installer/bin/laravel"
         if [[ ! -f "$V_LARAVEL_BIN_COMPOSER" && ! -f "$V_LARAVEL_BIN_CONFIG" ]]; then
-            echo -e "\nRunning \033[036mComposer require\033[0m for user \033[036m${V_USER}\033[0m"
+            F_LOG "\nRunning Composer require for user ${V_USER}"
             su - docker -c ". /home/${V_USER}/.bashrc; composer global require laravel/installer"
-            echo -e "\033[036mComposer require\033[0m ended\n"
+            F_LOG "Composer require ended\n"
             if [[ ! -f "$V_LARAVEL_BIN_COMPOSER" && ! -f "$V_LARAVEL_BIN_CONFIG" ]]; then
-                echo -e "\033[031mError: installing the laravel installer failed, ${V_LARAVEL_BIN_COMPOSER} and ${V_LARAVEL_BIN_CONFIG} not found\033[0m"
+                F_LOG "Error: installing the laravel installer failed, ${V_LARAVEL_BIN_COMPOSER} and ${V_LARAVEL_BIN_CONFIG} not found"
                 exit 1
             fi
         fi
         if [[ -e "$V_LARAVEL_BIN_COMPOSER" && ! -e "$V_LARAVEL_BIN" ]]; then
-            echo -e "Symlinking \033[036m${V_LARAVEL_BIN_COMPOSER}\033[0m to \033[036m${V_LARAVEL_BIN}\033[0m"
+            F_LOG "Symlinking ${V_LARAVEL_BIN_COMPOSER} to ${V_LARAVEL_BIN}"
             ln -s "$V_LARAVEL_BIN_COMPOSER" "$V_LARAVEL_BIN"
         elif [[ -e "$V_LARAVEL_BIN_CONFIG" && ! -e "$V_LARAVEL_BIN" ]]; then
-            echo -e "Symlinking \033[036m${V_LARAVEL_BIN_CONFIG}\033[0m to \033[036m${V_LARAVEL_BIN}\033[0m"
+            F_LOG "Symlinking ${V_LARAVEL_BIN_CONFIG} to ${V_LARAVEL_BIN}"
             ln -s "$V_LARAVEL_BIN_CONFIG" "$V_LARAVEL_BIN"
         else
-            echo -e "\033[031mError: installing the laravel installer failed, ${V_LARAVEL_BIN_COMPOSER} and ${V_LARAVEL_BIN_CONFIG} not found\033[0m"
+            F_LOG "Error: installing the laravel installer failed, ${V_LARAVEL_BIN_COMPOSER} and ${V_LARAVEL_BIN_CONFIG} not found"
             exit 1
         fi
         if [[ -e "$V_LARAVEL_BIN" ]]; then
-            echo -e "The \033[036mlaravel\033[0m installer is now \033[032minstalled\033[0m!"
+            F_LOG "The laravel installer is now installed!"
         else
-            echo -e "\033[031mError: installing the laravel installer failed, ${$V_LARAVEL_BIN} not found\033[0m"
+            F_LOG "Error: installing the laravel installer failed, ${$V_LARAVEL_BIN} not found"
             exit 1
         fi
     fi
 else
-    echo -e "\033[033mSkipping \033[036mLaravel\033[033m install\033[0m"
+    F_LOG "Skipping Laravel install"
 fi
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Last changes ... keep them last!
-echo -e "Running some final commands before cleaning up the system\033[0m"
+F_LOG "Running some final commands before cleaning up the system"
 if [[ $V_BASHRC_CREATED -eq 1 ]]; then
     
-    echo -e "\033[036mAdding .bash_aliases to .bashrc file\033[0m"
+    F_LOG "Adding .bash_aliases to .bashrc file"
     echo "" >> /home/$V_USER/.bashrc
     echo "if [ -f ~/.bash_aliases ]; then" >> /home/$V_USER/.bashrc
     echo "    . ~/.bash_aliases" >> /home/$V_USER/.bashrc
     echo "fi" >> /home/$V_USER/.bashrc
 
-    echo -e "\033[036mAdding connect redirect when starting bash\033[0m"
+    F_LOG "Adding connect redirect when starting bash"
     
     echo "" >> /home/$V_USER/.bashrc    
     echo "cd /var/www/html" >> /home/$V_USER/.bashrc
 fi
-echo -e "\033[032mDone\033[0m"
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+F_LOG "Done"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Custom after installer script?
 which lap-installer-after
 if [[ $? -eq 0 ]]; then
     bash lap-installer-after
     if [[ ! $? -eq 0 ]]; then
-        echo -e "\033[031mError: after installer failed, aborting\033[0m"
+        F_LOG "Error: after installer failed, aborting"
         exit 1
     fi
-    echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+    echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 fi
 
 # APT cleanup
-echo -e "Running \033[036mAPT cleanup\033[0m"
+F_LOG "Running APT cleanup"
 apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false
 rm -rf /var/lib/apt/lists/*
-echo -e "\033[032mDone\033[0m"
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+F_LOG "Done"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Store the installation script version
-echo -e "Updating \033[036minstallation version\033[0m"
+F_LOG "Updating installation version"
 if [[ ! -d /usr/share/docker ]]; then mkdir -p /usr/share/docker; fi
 echo "$V_SCRIPT_VERSION" > /usr/share/docker/lap-installer.version
 V_NEW_VERSION=$( cat /usr/share/docker/lap-installer.version )
-echo -e "New stat version: \033[032m${V_NEW_VERSION}\033[0m"
-echo -e "Required version: \033[032m${V_SCRIPT_VERSION}\033[0m"
+F_LOG "New stat version: ${V_NEW_VERSION}"
+F_LOG "Required version: ${V_SCRIPT_VERSION}"
 if [[ ! "$V_NEW_VERSION" == "$V_SCRIPT_VERSION" ]]; then
-    echo -e "\033[033mWarning: stored stat version mismatch, please debug if you would be so kind\033[0m"
+    F_LOG "Warning: stored stat version mismatch, please debug if you would be so kind"
 fi
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+
+if [[ $TEMP_SERVER_PID -gt 0 ]]; then
+    kill -9 $TEMP_SERVER_PID
+fi
+if [[ -d /tmp/docker-boot-www ]]; then
+    rm -f /tmp/docker-boot-www
+fi
 
 exit 0
