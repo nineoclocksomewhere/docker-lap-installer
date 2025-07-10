@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.56"
+V_SCRIPT_VERSION="1.0.57"
 
 if [[ ! -d /tmp/docker-boot-www ]]; then
     mkdir /tmp/docker-boot-www
@@ -102,9 +102,13 @@ cat <<EOL > /tmp/docker-boot-www/index.html
     async function fetchLogs() {
       try {
         const res = await fetch('/boot.log', { cache: 'no-store' });
-        const text = await res.text();
-        document.getElementById('log-container').textContent = text;
-        document.getElementById('log-container').scrollTop = document.getElementById('log-container').scrollHeight;
+        if (!res.ok) {
+            location.reload();
+        } else {
+            const text = await res.text();
+            document.getElementById('log-container').textContent = text;
+            document.getElementById('log-container').scrollTop = document.getElementById('log-container').scrollHeight;
+        }
       } catch (err) {
         document.getElementById('log-container').textContent = "Unable to load logs. Make sure boot.log is available.";
       }
