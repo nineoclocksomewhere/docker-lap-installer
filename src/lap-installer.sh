@@ -1,18 +1,31 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.54"
+V_SCRIPT_VERSION="1.0.55"
+
+if [[ ! -d /tmp/docker-boot-www ]]; then
+    mkdir /tmp/docker-boot-www
+fi
+if [[ -f /tmp/docker-boot-www/boot.log ]]; then
+    rm /tmp/docker-boot-www/boot.log
+fi
+F_LOG() {
+  local V_MSG="$*"
+  local V_LOGFILE="/tmp/docker-boot-www/boot.log"
+  echo -e "$V_MSG"
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] ${V_MSG}" >> "$V_LOGFILE"
+}
 
 # First, an introduction
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
-echo  -ne "Let me introduce myself:\nI am $( whoami ), "
-echo  -ne $(( $( date +%s ) - $( stat -c %W $HOME ) ))
-echo  -e " seconds old, live at ${HOME} but currently staying at $( pwd )."
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -ne "Let me introduce myself:\nI am $( whoami ), "
+echo -ne $(( $( date +%s ) - $( stat -c %W $HOME ) ))
+echo -e " seconds old, live at ${HOME} but currently staying at $( pwd )."
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # We need to be root
 if [[ ! "$( whoami )" == "root" ]]; then
-    echo  -e "Error: this script needs to run as the root user, aborting"
-    echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+    echo -e "Error: this script needs to run as the root user, aborting"
+    echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
     exit 1
 fi
 
@@ -24,7 +37,7 @@ else
 fi
 if [[ "$V_CURRENT_VERSION" == "$V_SCRIPT_VERSION" ]]; then
     F_LOG "Installation is up-to-date (v${V_CURRENT_VERSION})"
-    echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+    echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
     exit 0
 fi
 
@@ -35,23 +48,9 @@ else
     rm /usr/share/docker/lap-installer.version > /dev/null 2>&1
     F_LOG "Installation outdated (current: ${V_CURRENT_VERSION}, required: ${V_SCRIPT_VERSION}), updating now"
 fi
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Serve maintenance page with busybox temporarily
-F_LOG "Starting the temporary status page"
-if [[ ! -d /tmp/docker-boot-www ]]; then
-    mkdir /tmp/docker-boot-www
-fi
-if [[ -f /tmp/docker-boot-www/boot.log ]]; then
-    rm /tmp/docker-boot-www/boot.log
-fi
-F_LOG() {
-  local V_MSG="$*"
-  local V_LOGFILE="/tmp/docker-boot-www/boot.log"
-  echo  -e "$V_MSG"
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] ${V_MSG}" >> "$V_LOGFILE"
-}
-F_LOG "Booting the container"
 cat <<EOL > /tmp/docker-boot-www/index.html
 <!DOCTYPE html>
 <html lang="en">
@@ -123,7 +122,7 @@ TEMP_SERVER_PID=$!
 sleep 1
 apt-get -y upgrade
 
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Custom before installer script?
 which lap-installer-before
@@ -134,7 +133,7 @@ if [[ $? -eq 0 ]]; then
         F_LOG "Error: before installer failed, aborting"
         exit 1
     fi
-    echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+    echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 fi
 
 # User configuration - Part 1/2
@@ -165,7 +164,7 @@ else
     usermod -d /home/$V_USER $V_USER
     V_USER_CREATED=1
 fi
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Basic packages
 F_LOG "Verifying if all basic packages are installed"
@@ -205,7 +204,7 @@ apt-get install -y \
     libmemcached-dev \
     pv
 F_LOG "Done"
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Locales
 F_LOG "Installing and updating locales"
@@ -223,7 +222,7 @@ fi
 # Generate locales
 locale-gen
 
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # WKHTMLTOPDF
 [[ "$DOCKER_INSTALL_WKHTMLTOPDF" == "" ]] && export DOCKER_INSTALL_WKHTMLTOPDF="no"
@@ -235,7 +234,7 @@ if [[ "${DOCKER_INSTALL_WKHTMLTOPDF,,}" =~ ^(y|yes|1|true)$ ]]; then
 else
     F_LOG "Skipping wkhtmltopdf install"
 fi
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Image Optimizers
 [[ "$DOCKER_INSTALL_IMAGE_OPTIMIZERS" == "" ]] && export DOCKER_INSTALL_IMAGE_OPTIMIZERS="yes"
@@ -250,7 +249,7 @@ if [[ "${DOCKER_INSTALL_IMAGE_OPTIMIZERS,,}" =~ ^(y|yes|1|true)$ ]]; then
 else
     F_LOG "Skipping Image Optimizers install"
 fi
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # PHP extensions list: https:/127.0.0.1/github.com/mlocati/docker-php-extension-installer#supported-php-extensions
 V_PHP_MAJOR_VERSION=$( php -r "echo explode('.', phpversion())[0];" )
@@ -439,7 +438,7 @@ if [[ "${DOCKER_INSTALL_PHP_SODIUM,,}" =~ ^(y|yes|1|true)$ ]]; then
 fi
 
 F_LOG "\nDone"
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Apache mods
 F_LOG "Checking apache mods"
@@ -450,7 +449,7 @@ if [[ ! -e /etc/apache2/mods-enabled/headers.load ]]; then
     a2enmod headers
 fi
 F_LOG "Done"
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # User configuration - Part 2/2
 F_LOG "Checking user configuration (Part 2/2)"
@@ -478,7 +477,7 @@ F_LOG "Showing contents of /home/$V_USER"
 ls -la /home/$V_USER
 V_USER_PATH=$( su - docker -c ". ~/.bashrc; echo \$PATH" )
 F_LOG "${V_USER}'s \$PATH is /home/${V_USER_PATH}"
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Composer
 [[ "$DOCKER_INSTALL_COMPOSER" == "" ]] && export DOCKER_INSTALL_COMPOSER="yes"
@@ -537,7 +536,7 @@ if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
 else
     F_LOG "Skipping Composer install"
 fi
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # NodeJS
 [[ "$DOCKER_INSTALL_NODEJS" == "" ]] && export DOCKER_INSTALL_NODEJS="no"
@@ -590,7 +589,7 @@ if [[ "${DOCKER_INSTALL_NODEJS,,}" =~ ^(y|yes|1|true)$ ]]; then
 else
     F_LOG "Skipping ModeJS install"
 fi
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Python
 [[ "$DOCKER_INSTALL_PYTHON3" == "" ]] && export DOCKER_INSTALL_PYTHON3="yes"
@@ -602,7 +601,7 @@ if [[ "${DOCKER_INSTALL_PYTHON3,,}" =~ ^(y|yes|1|true)$ ]]; then
 else
     F_LOG "Skipping Python3 install"
 fi
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Slatedocs
 [[ "$DOCKER_INSTALL_SLATE" == "" ]] && export DOCKER_INSTALL_SLATE="no"
@@ -658,7 +657,7 @@ if [[ "${DOCKER_INSTALL_SLATE,,}" =~ ^(y|yes|1|true)$ ]]; then
 else
     F_LOG "Skipping Slate install"
 fi
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Laravel
 [[ "$DOCKER_INSTALL_LARAVEL" == "" ]] && export DOCKER_INSTALL_LARAVEL="no"
@@ -701,7 +700,7 @@ if [[ "${DOCKER_INSTALL_LARAVEL,,}" =~ ^(y|yes|1|true)$ ]]; then
 else
     F_LOG "Skipping Laravel install"
 fi
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Last changes ... keep them last!
 F_LOG "Running some final commands before cleaning up the system"
@@ -719,7 +718,7 @@ if [[ $V_BASHRC_CREATED -eq 1 ]]; then
     echo "cd /var/www/html" >> /home/$V_USER/.bashrc
 fi
 F_LOG "Done"
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Custom after installer script?
 which lap-installer-after
@@ -729,7 +728,7 @@ if [[ $? -eq 0 ]]; then
         F_LOG "Error: after installer failed, aborting"
         exit 1
     fi
-    echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+    echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 fi
 
 # APT cleanup
@@ -737,7 +736,7 @@ F_LOG "Running APT cleanup"
 apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false
 rm -rf /var/lib/apt/lists/*
 F_LOG "Done"
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Store the installation script version
 F_LOG "Updating installation version"
@@ -749,7 +748,7 @@ F_LOG "Required version: ${V_SCRIPT_VERSION}"
 if [[ ! "$V_NEW_VERSION" == "$V_SCRIPT_VERSION" ]]; then
     F_LOG "Warning: stored stat version mismatch, please debug if you would be so kind"
 fi
-echo  -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 if [[ $TEMP_SERVER_PID -gt 0 ]]; then
     kill -9 $TEMP_SERVER_PID
