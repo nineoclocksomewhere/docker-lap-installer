@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.57"
+V_SCRIPT_VERSION="1.0.58"
 
 if [[ ! -d /tmp/docker-boot-www ]]; then
     mkdir /tmp/docker-boot-www
@@ -56,8 +56,7 @@ cat <<EOL > /tmp/docker-boot-www/index.html
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="refresh" content="600">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+7  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Starting Up...</title>
   <style>
     body {
@@ -78,6 +77,7 @@ cat <<EOL > /tmp/docker-boot-www/index.html
       background: #121212;
       border: 1px solid #444;
       border-radius: 8px;
+      color: green;
       width: 100%;
       max-width: 960px;
       height: 400px;
@@ -103,7 +103,7 @@ cat <<EOL > /tmp/docker-boot-www/index.html
       try {
         const res = await fetch('/boot.log', { cache: 'no-store' });
         if (!res.ok) {
-            location.reload();
+            setTimeout("location.reload()", 3000);
         } else {
             const text = await res.text();
             document.getElementById('log-container').textContent = text;
