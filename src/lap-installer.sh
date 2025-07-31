@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.65"
+V_SCRIPT_VERSION="1.0.66"
 
 if [[ ! -d /tmp/docker-boot-www ]]; then
     mkdir /tmp/docker-boot-www
@@ -49,6 +49,30 @@ else
     F_LOG "Installation outdated (current: ${V_CURRENT_VERSION}, required: ${V_SCRIPT_VERSION}), updating now"
 fi
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+
+
+
+# Check if we need to switch to Debian archive repositories
+if [[ "${DOCKER_USE_DEBIAN_ARCHIVE,,}" =~ ^(y|yes|1|true)$ ]]; then
+    echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+    ## echo we are using DEBIAN archive repositories
+    echo -ne "\033[1;33mSwitching to Debian archive repositories...\033[0m\n"
+    
+    F_LOG "Switching to Debian archive repositories"
+
+    sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list
+    sed -i 's|http://security.debian.org/debian-security|http://archive.debian.org/debian-security|g' /etc/apt/sources.list
+
+    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
+
+    F_LOG "Debian archive repositories set and valid-until check disabled"
+
+    # Update the package list
+    apt-get update
+
+    echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
+fi
+
 
 # Serve maintenance page with busybox temporarily
 cat <<EOL > /tmp/docker-boot-www/index.html
@@ -170,15 +194,6 @@ else
     V_USER_CREATED=1
 fi
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
-
-# Check if we need to switch to Debian archive repositories
-if [[ "${DOCKER_USE_DEBIAN_ARCHIVE,,}" =~ ^(y|yes|1|true)$ ]]; then
-    F_LOG "Switching to Debian archive repositories"
-    sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list
-    sed -i 's|http://security.debian.org/debian-security|http://archive.debian.org/debian-security|g' /etc/apt/sources.list
-    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
-    F_LOG "Debian archive repositories set and valid-until check disabled"
-fi
 
 # Basic packages
 F_LOG "Verifying if all basic packages are installed"
