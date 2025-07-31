@@ -171,12 +171,26 @@ else
 fi
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
+# Check if we need to switch to Debian archive repositories
+if [[ "${DOCKER_USE_DEBIAN_ARCHIVE,,}" =~ ^(y|yes|1|true)$ ]]; then
+    F_LOG "Switching to Debian archive repositories"
+    sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list
+    sed -i 's|http://security.debian.org/debian-security|http://archive.debian.org/debian-security|g' /etc/apt/sources.list
+    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
+    F_LOG "Debian archive repositories set and valid-until check disabled"
+fi
+
 # Basic packages
 F_LOG "Verifying if all basic packages are installed"
 # https://askubuntu.com/a/1500085
 if [[ -d /var/lib/dpkg/updates ]]; then
-    rm /var/lib/dpkg/updates/*
+    if [[ "$(ls -A /var/lib/dpkg/updates)" ]]; then
+        rm /var/lib/dpkg/updates/*
+    else
+        F_LOG "/var/lib/dpkg/updates is empty, nothing to remove"
+    fi
 fi
+
 apt-get install -y \
     coreutils \
     libfreetype6-dev \
