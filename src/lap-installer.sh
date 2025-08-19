@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.66"
+V_SCRIPT_VERSION="1.0.67"
 
 if [[ ! -d /tmp/docker-boot-www ]]; then
     mkdir /tmp/docker-boot-www
@@ -525,31 +525,40 @@ echo -e "\n\033[036m────────────────────
 F_LOG "DOCKER_INSTALL_COMPOSER=${DOCKER_INSTALL_COMPOSER}"
 if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
     F_LOG "Installing Composer"
-    F_LOG "Checking if composer is installed"
+    F_LOG "Checking if Composer is installed"
     if [[ -f /usr/local/bin/composer ]]; then
         F_LOG "Installed"
     else
         F_LOG "Not installed, installing now"
+
         # Prepare a composer installer directory
-        mkdir /tmp/composer-installer && cd /tmp/composer-installer
+        mkdir -p /tmp/composer-installer && cd /tmp/composer-installer
+
         # https://getcomposer.org/download/
-        V_COMPOSER_HASH=$( curl https://composer.github.io/installer.sig )
+        V_COMPOSER_HASH=$( curl -s https://composer.github.io/installer.sig )
         php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
         php -r "if (hash_file('sha384', 'composer-setup.php') === '${V_COMPOSER_HASH}') { echo \"Composer installer verified\".PHP_EOL; } else { echo \"Composer installer corrupt\".PHP_EOL; unlink('composer-setup.php'); if (file_exists('composer-setup.php')) { echo \"Removing \".realpath('composer-setup.php').\" failed\".PHP_EOL; } }"
+
         if [[ -f "composer-setup.php" ]]; then
             F_LOG "Composer installer saved as $( realpath 'composer-setup.php' )"
             F_LOG "Running composer-setup.php"
+
             if [[ "$DOCKER_COMPOSER_VERSION" != "" ]]; then
-                php composer-setup.php --version=$DOCKER_COMPOSER_VERSION
+                F_LOG "Installing Composer version $DOCKER_COMPOSER_VERSION"
+                php composer-setup.php --version="$DOCKER_COMPOSER_VERSION"
             else
+                F_LOG "Installing latest Composer version"
                 php composer-setup.php
             fi
+
             if [[ ! $? -eq 0 ]]; then
-                F_LOG "Error: installing composer failed, aborting"
+                F_LOG "Error: installing Composer failed, aborting"
                 exit 1
             fi
+
             F_LOG "Removing composer-setup.php"
             php -r "unlink('composer-setup.php'); if (file_exists('composer-setup.php')) { echo \"Removing \".realpath('composer-setup.php').\" failed\".PHP_EOL; }"
+
             if [[ -f composer.phar ]]; then
                 chmod +x composer.phar
                 if [[ ! -d /usr/local/bin ]]; then
@@ -564,13 +573,15 @@ if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
                 exit 1
             fi
         else
-            F_LOG "Error: installing composer failed, aborting"
+            F_LOG "Error: installing Composer failed, aborting"
             exit 1
         fi
+
         if [[ -f /usr/local/bin/composer ]]; then
             F_LOG "Composer is now installed!"
+            /usr/local/bin/composer --version
         else
-            F_LOG "Error: installing composer failed, aborting"
+            F_LOG "Error: installing Composer failed, aborting"
             exit 1
         fi
     fi
