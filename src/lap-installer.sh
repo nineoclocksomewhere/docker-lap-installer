@@ -543,7 +543,7 @@ if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
             F_LOG "Composer installer saved as $( realpath 'composer-setup.php' )"
             F_LOG "Running composer-setup.php"
 
-            F_LOG "For available Composer versions, check: https://github.com/composer/composer/tags"
+            F_LOG "For available Composer versions, check: https://github.com/composer/composer/releases"
             if [[ "$DOCKER_COMPOSER_VERSION" != "" ]]; then
                 F_LOG "Installing Composer version $DOCKER_COMPOSER_VERSION"
                 php composer-setup.php --version="$DOCKER_COMPOSER_VERSION"
