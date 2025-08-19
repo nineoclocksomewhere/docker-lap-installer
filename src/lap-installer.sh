@@ -795,7 +795,7 @@ if [[ $TEMP_SERVER_PID -gt 0 ]]; then
     kill -9 $TEMP_SERVER_PID
 fi
 if [[ -d /tmp/docker-boot-www ]]; then
-    rm -f /tmp/docker-boot-www
+    rm -rf /tmp/docker-boot-www
 fi
 
 exit 0
