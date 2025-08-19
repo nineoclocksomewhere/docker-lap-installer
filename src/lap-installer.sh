@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.67"
+V_SCRIPT_VERSION="1.0.68"
 
 if [[ ! -d /tmp/docker-boot-www ]]; then
     mkdir /tmp/docker-boot-www
@@ -543,6 +543,7 @@ if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
             F_LOG "Composer installer saved as $( realpath 'composer-setup.php' )"
             F_LOG "Running composer-setup.php"
 
+            F_LOG "For available Composer versions, check: https://github.com/composer/composer/tags"
             if [[ "$DOCKER_COMPOSER_VERSION" != "" ]]; then
                 F_LOG "Installing Composer version $DOCKER_COMPOSER_VERSION"
                 php composer-setup.php --version="$DOCKER_COMPOSER_VERSION"
