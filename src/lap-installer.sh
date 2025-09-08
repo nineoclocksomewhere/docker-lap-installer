@@ -122,9 +122,14 @@ if [[ "${DOCKER_USE_DEBIAN_ARCHIVE,,}" =~ ^(y|yes|1|true)$ ]]; then
 
     # Update the package list
     apt-get update
-
-    F_LINE
+else
+    echo -e "\033[032mUsing Debian's active repositories\033[0m"
 fi
+echo
+echo -e "Using APT sources:\033[036m"
+cat /etc/apt/sources.list /etc/apt/sources.list.d/* | egrep "^deb(\-)?"
+echo -ne "\033[0m"
+F_LINE
 
 # Custom before installer script?
 which lap-installer-before
