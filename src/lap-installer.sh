@@ -9,6 +9,45 @@ F_LOG() {
 F_LINE() {
     echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 }
+F_GET_CODENAME() {
+    local CODENAME=""
+    # 1. Try lsb_release if available
+    if command -v lsb_release >/dev/null 2>&1; then
+        CODENAME=$(lsb_release -sc 2>/dev/null)
+        if [ -n "$CODENAME" ]; then
+            echo "$CODENAME"
+            return 0
+        fi
+    fi
+    # 2. Try /etc/os-release
+    if [ -r /etc/os-release ]; then
+        CODENAME=$(grep -E '^VERSION_CODENAME=' /etc/os-release | cut -d= -f2)
+        if [ -n "$CODENAME" ]; then
+            echo "$CODENAME"
+            return 0
+        fi
+    fi
+    # 3. Try /etc/debian_version
+    if [ -r /etc/debian_version ]; then
+        local VERSION
+        VERSION=$(cut -d. -f1 /etc/debian_version)
+        case "$VERSION" in
+            12) CODENAME="bookworm" ;;
+            11) CODENAME="bullseye" ;;
+            10) CODENAME="buster" ;;
+            9)  CODENAME="stretch" ;;
+            8)  CODENAME="jessie" ;;
+            7)  CODENAME="wheezy" ;;
+        esac
+        if [[ -n "$CODENAME" ]]; then
+            echo "$CODENAME"
+            return 0
+        fi
+    fi
+    # 4. If everything failed → exit with error
+    echo -e "\033[031mError: could not determine Debian codename\033[0m" >&2
+    exit 1
+}
 
 # First, an introduction
 F_LINE
@@ -50,7 +89,7 @@ F_LINE
 
 # Check if we need to switch to Debian archive repositories
 if [[ ! "${DOCKER_USE_DEBIAN_ARCHIVE,,}" =~ ^(y|yes|1|true)$ ]]; then
-    V_DEB_CODENAME=$(lsb_release -sc)
+    V_DEB_CODENAME=$( F_GET_CODENAME )
     V_DEB_MAIN_URL="http://deb.debian.org/debian/dists/${V_DEB_CODENAME}/Release"
     V_DEB_ARCHIVE_URL="http://archive.debian.org/debian/dists/${V_DEB_CODENAME}/Release"
     if curl --silent --head --fail "$V_DEB_MAIN_URL" > /dev/null; then
