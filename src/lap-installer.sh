@@ -67,20 +67,23 @@ fi
 V_SCRIPT_FILE=$( readlink -f "$0" )
 V_SCRIPT_MD5SUM=$( md5sum $V_SCRIPT_FILE )
 V_REQUIRED_SCRIPT_HASH=${V_SCRIPT_MD5SUM%% *}
+F_LOG "Using required script hash \033[036m${V_REQUIRED_SCRIPT_HASH}\033[0m"
 if [[ -f /usr/share/docker/lap-installer.hash ]]; then
     V_INSTALLED_SCRIPT_HASH=$( cat /usr/share/docker/lap-installer.hash )
+    F_LOG "Using installed script hash \033[036m${V_INSTALLED_SCRIPT_HASH}\033[0m"
 else
     V_INSTALLED_SCRIPT_HASH=""
+    F_LOG "No installed script hash found"
 fi
 if [[ "$V_INSTALLED_SCRIPT_HASH" == "$V_REQUIRED_SCRIPT_HASH" ]]; then
-    F_LOG "Installation is up-to-date \033[090m(script hash ${V_INSTALLED_SCRIPT_HASH})\033[0m"
+    F_LOG "Installation is up-to-date"
     F_LINE
     exit 0
 fi
 
 # Say why we re-check it all
 if [[ ! -f /usr/share/docker/lap-installer.hash ]]; then
-    F_LOG "Installation never executed for this container \033[090m(required hash: ${V_REQUIRED_SCRIPT_HASH})\033[0m], installing now"
+    F_LOG "Installation never executed for this container \033[090m(required hash: ${V_REQUIRED_SCRIPT_HASH})\033[0m, installing now"
 else
     rm /usr/share/docker/lap-installer.hash > /dev/null 2>&1
     F_LOG "Installation outdated \033[090m(required hash: ${V_REQUIRED_SCRIPT_HASH}, installed hash: ${V_INSTALLED_SCRIPT_HASH})\033[0m, updating now"
