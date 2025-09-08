@@ -1,18 +1,10 @@
 #!/usr/bin/env bash
 
-V_SCRIPT_VERSION="1.0.68"
-
-if [[ ! -d /tmp/docker-boot-www ]]; then
-    mkdir /tmp/docker-boot-www
-fi
-if [[ -f /tmp/docker-boot-www/boot.log ]]; then
-    rm /tmp/docker-boot-www/boot.log
-fi
 F_LOG() {
-  local V_MSG="$*"
-  local V_LOGFILE="/tmp/docker-boot-www/boot.log"
-  echo -e "$V_MSG"
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] ${V_MSG}" >> "$V_LOGFILE"
+    local V_MSG="$*"
+    local V_LOGFILE="/var/log/lap-installer.log"
+    echo -e "$V_MSG"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ${V_MSG}" >> "$V_LOGFILE"
 }
 
 # First, an introduction
@@ -30,27 +22,28 @@ if [[ ! "$( whoami )" == "root" ]]; then
 fi
 
 # Check if the installation is up-to-date
-if [[ -f /usr/share/docker/lap-installer.version ]]; then
-    V_CURRENT_VERSION=$( cat /usr/share/docker/lap-installer.version )
+V_SCRIPT_FILE=$( readlink -f "$0" )
+V_SCRIPT_MD5SUM=$( md5sum $V_SCRIPT_FILE )
+V_REQUIRED_SCRIPT_HASH=${V_SCRIPT_MD5SUM%% *}
+if [[ -f /usr/share/docker/lap-installer.hash ]]; then
+    V_INSTALLED_SCRIPT_HASH=$( cat /usr/share/docker/lap-installer.hash )
 else
-    V_CURRENT_VERSION=""
+    V_INSTALLED_SCRIPT_HASH=""
 fi
-if [[ "$V_CURRENT_VERSION" == "$V_SCRIPT_VERSION" ]]; then
-    F_LOG "Installation is up-to-date (v${V_CURRENT_VERSION})"
+if [[ "$V_INSTALLED_SCRIPT_HASH" == "$V_REQUIRED_SCRIPT_HASH" ]]; then
+    F_LOG "Installation is up-to-date (v${V_INSTALLED_SCRIPT_HASH})"
     echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
     exit 0
 fi
 
 # Say why we re-check it all
-if [[ ! -f /usr/share/docker/lap-installer.version ]]; then
-    F_LOG "Installation never executed for this container, installing v${V_SCRIPT_VERSION} now"
+if [[ ! -f /usr/share/docker/lap-installer.hash ]]; then
+    F_LOG "Installation never executed for this container, installing now"
 else
-    rm /usr/share/docker/lap-installer.version > /dev/null 2>&1
-    F_LOG "Installation outdated (current: ${V_CURRENT_VERSION}, required: ${V_SCRIPT_VERSION}), updating now"
+    rm /usr/share/docker/lap-installer.hash > /dev/null 2>&1
+    F_LOG "Installation outdated (required hash: ${V_REQUIRED_SCRIPT_HASH}, installed hash: ${V_INSTALLED_SCRIPT_HASH}), updating now"
 fi
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
-
-
 
 # Check if we need to switch to Debian archive repositories
 if [[ "${DOCKER_USE_DEBIAN_ARCHIVE,,}" =~ ^(y|yes|1|true)$ ]]; then
@@ -72,86 +65,6 @@ if [[ "${DOCKER_USE_DEBIAN_ARCHIVE,,}" =~ ^(y|yes|1|true)$ ]]; then
 
     echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 fi
-
-
-# Serve maintenance page with busybox temporarily
-cat <<EOL > /tmp/docker-boot-www/index.html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Starting Up...</title>
-  <style>
-    body {
-      margin: 0;
-      background: #1e1e1e;
-      color: #ccc;
-      font-family: "Fira Code", monospace;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2em;
-    }
-    h1 {
-      color: #fff;
-      margin-bottom: 0.5em;
-    }
-    #log-container {
-      background: #121212;
-      border: 1px solid #444;
-      border-radius: 8px;
-      color: #00CC00;
-      width: 100%;
-      max-width: 960px;
-      height: 400px;
-      overflow-y: auto;
-      padding: 1em;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-      white-space: pre-wrap;
-      font-size: .85rem;
-    }
-    .footer {
-      margin-top: 1em;
-      font-size: 0.9em;
-      color: #666;
-    }
-  </style>
-</head>
-<body>
-  <h1>🛠 Starting the container...</h1>
-  <div id="log-container">Loading logs...</div>
-  <div class="footer">Logs update every 3 seconds</div>
-  <script>
-    async function fetchLogs() {
-      try {
-        const res = await fetch('/boot.log', { cache: 'no-store' });
-        if (! res?.ok || (res.status < 200) || (res.status > 299)) {
-            throw new Error("File not found");
-        }
-        const text = await res.text();
-        document.getElementById('log-container').textContent = text;
-        document.getElementById('log-container').scrollTop = document.getElementById('log-container').scrollHeight;
-      } catch (err) {
-        document.getElementById('log-container').textContent = "Unable to load logs. Make sure boot.log is available.";
-        clearInterval(window.fetch_timer);
-        setTimeout("location.reload();", 3000);
-      }
-    }
-    window.fetch_timer = setInterval(fetchLogs, 3000);
-    fetchLogs();
-  </script>
-</body>
-</html>
-EOL
-apt-get update
-apt-get -y install busybox
-busybox httpd -f -p 80 -h /tmp/docker-boot-www &
-TEMP_SERVER_PID=$!
-sleep 1
-apt-get -y upgrade
-
-echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
 
 # Custom before installer script?
 which lap-installer-before
@@ -794,20 +707,13 @@ echo -e "\n\033[036m────────────────────
 # Store the installation script version
 F_LOG "Updating installation version"
 if [[ ! -d /usr/share/docker ]]; then mkdir -p /usr/share/docker; fi
-echo "$V_SCRIPT_VERSION" > /usr/share/docker/lap-installer.version
-V_NEW_VERSION=$( cat /usr/share/docker/lap-installer.version )
-F_LOG "New stat version: ${V_NEW_VERSION}"
-F_LOG "Required version: ${V_SCRIPT_VERSION}"
-if [[ ! "$V_NEW_VERSION" == "$V_SCRIPT_VERSION" ]]; then
-    F_LOG "Warning: stored stat version mismatch, please debug if you would be so kind"
+echo "$V_REQUIRED_SCRIPT_HASH" > /usr/share/docker/lap-installer.hash
+V_NEW_SCRIPT_HASH=$( cat /usr/share/docker/lap-installer.hash )
+F_LOG "New script hash: ${V_NEW_SCRIPT_HASH}"
+F_LOG "Required script hash: ${V_REQUIRED_SCRIPT_HASH}"
+if [[ ! "$V_NEW_SCRIPT_HASH" == "$V_REQUIRED_SCRIPT_HASH" ]]; then
+    F_LOG "Warning: stored script hash mismatch (please debug if you would be so kind)"
 fi
 echo -e "\n\033[036m────────────────────────────────────────────────────────────────────────────────\033[0m\n"
-
-if [[ $TEMP_SERVER_PID -gt 0 ]]; then
-    kill -9 $TEMP_SERVER_PID
-fi
-if [[ -d /tmp/docker-boot-www ]]; then
-    rm -rf /tmp/docker-boot-www
-fi
 
 exit 0
