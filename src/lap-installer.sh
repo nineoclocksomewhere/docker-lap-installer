@@ -127,7 +127,12 @@ else
 fi
 echo
 echo -e "Using APT sources:\033[036m"
-cat /etc/apt/sources.list /etc/apt/sources.list.d/* | egrep "^deb(\-)?"
+if [[ -f /etc/apt/sources.list ]]; then
+    cat /etc/apt/sources.list | egrep "^deb(\-)?"
+fi
+if [[ -d /etc/apt/sources.list.d && $(ls -1 /etc/apt/sources.list.d/* | wc -l) -gt 0 ]]; then
+    cat /etc/apt/sources.list.d/* | egrep "^deb(\-)?"
+fi
 echo -ne "\033[0m"
 F_LINE
 
