@@ -50,7 +50,6 @@ F_LINE
 
 # Check if we need to switch to Debian archive repositories
 if [[ "${DOCKER_USE_DEBIAN_ARCHIVE,,}" =~ ^(y|yes|1|true)$ ]]; then
-    F_LINE
     ## echo we are using DEBIAN archive repositories
     echo -ne "\033[1;33mSwitching to Debian archive repositories...\033[0m\n"
     
