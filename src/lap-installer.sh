@@ -769,8 +769,8 @@ F_LOG "Updating installation version"
 if [[ ! -d /usr/share/docker ]]; then mkdir -p /usr/share/docker; fi
 echo "$V_REQUIRED_SCRIPT_HASH" > /usr/share/docker/lap-installer.hash
 V_NEW_SCRIPT_HASH=$( cat /usr/share/docker/lap-installer.hash )
-F_LOG "New script hash: ${V_NEW_SCRIPT_HASH}"
-F_LOG "Required script hash: ${V_REQUIRED_SCRIPT_HASH}"
+F_LOG "Using new script hash \033[036m${V_NEW_SCRIPT_HASH}\033[0m"
+F_LOG "Using required script hash \033[036m${V_REQUIRED_SCRIPT_HASH}\033[0m"
 if [[ ! "$V_NEW_SCRIPT_HASH" == "$V_REQUIRED_SCRIPT_HASH" ]]; then
     F_LOG "Warning: stored script hash mismatch (please debug if you would be so kind)"
 fi
