@@ -96,10 +96,10 @@ if [[ ! "${DOCKER_USE_DEBIAN_ARCHIVE,,}" =~ ^(y|yes|1|true)$ ]]; then
         echo -e "\033[032m${V_DEB_CODENAME} is still on the main Debian mirrors\033[0m"
     else
         if curl --silent --head --fail "$V_DEB_ARCHIVE_URL" > /dev/null; then
-            echo "\033[033mWarning: the Debian ${V_DEB_CODENAME} codebase has been archived\033[0m"
+            echo -e "\033[033mWarning: the Debian ${V_DEB_CODENAME} codebase has been archived\033[0m"
             DOCKER_USE_DEBIAN_ARCHIVE="true"
         else
-            echo "\033[031mError: could not find ${V_DEB_CODENAME} in main or archive mirrors\033[0m"
+            echo -e "\033[031mError: could not find ${V_DEB_CODENAME} in main or archive mirrors\033[0m"
             exit 1
         fi
     fi
