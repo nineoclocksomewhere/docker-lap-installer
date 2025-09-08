@@ -603,8 +603,8 @@ if [[ "${DOCKER_INSTALL_NODEJS,,}" =~ ^(y|yes|1|true)$ ]]; then
             nvm install \$NODE_VERSION; \
             nvm alias default \$NODE_VERSION; \
             nvm use default; \
-            npm install -g npm@latest; \
-            npm install -g svgo"
+            npm_config_engine_strict=false npm install -g npm@latest; \
+            npm_config_engine_strict=false npm install -g svgo"
         if [[ ! $? -eq 0 ]]; then
             F_LOG "Error: installing node failed, aborting"
             exit 1
