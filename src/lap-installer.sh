@@ -49,6 +49,22 @@ fi
 F_LINE
 
 # Check if we need to switch to Debian archive repositories
+if [[ ! "${DOCKER_USE_DEBIAN_ARCHIVE,,}" =~ ^(y|yes|1|true)$ ]]; then
+    V_DEB_CODENAME=$(lsb_release -sc)
+    V_DEB_MAIN_URL="http://deb.debian.org/debian/dists/${V_DEB_CODENAME}/Release"
+    V_DEB_ARCHIVE_URL="http://archive.debian.org/debian/dists/${V_DEB_CODENAME}/Release"
+    if curl --silent --head --fail "$V_DEB_MAIN_URL" > /dev/null; then
+        echo -e "\033[032m${V_DEB_CODENAME} is still on the main Debian mirrors\033[0m"
+    else
+        if curl --silent --head --fail "$V_DEB_ARCHIVE_URL" > /dev/null; then
+            echo "\033[033mWarning: the Debian ${V_DEB_CODENAME} codebase has been archived\033[0m"
+            DOCKER_USE_DEBIAN_ARCHIVE="true"
+        else
+            echo "\033[031mError: could not find ${V_DEB_CODENAME} in main or archive mirrors\033[0m"
+            exit 1
+        fi
+    fi
+fi
 if [[ "${DOCKER_USE_DEBIAN_ARCHIVE,,}" =~ ^(y|yes|1|true)$ ]]; then
     ## echo we are using DEBIAN archive repositories
     echo -ne "\033[1;33mSwitching to Debian archive repositories...\033[0m\n"
