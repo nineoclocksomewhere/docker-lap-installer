@@ -227,7 +227,7 @@ cat <<EOL > /tmp/lap-installer/boot.html
 EOL
 apt-get update
 apt-get -y install busybox
-busybox httpd -f -p 80 -h /tmp/docker-boot-www &
+busybox httpd -f -p 80 -h /tmp/lap-installer &
 TEMP_SERVER_PID=$!
 sleep 1
 apt-get -y upgrade
