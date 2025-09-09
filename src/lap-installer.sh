@@ -229,7 +229,7 @@ apt-get update
 apt-get -y install busybox
 busybox httpd -f -p 80 -h /tmp/docker-boot-www &
 TEMP_SERVER_PID=$!
-sleep 3
+sleep 1
 apt-get -y upgrade
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -989,15 +989,21 @@ F_LINE
 
 F_LOG "Stopping the busybox server"
 if [[ $TEMP_SERVER_PID -gt 0 ]]; then
+    ps ax | grep "$TEMP_SERVER_PID"
     ps ax | grep busybox
     echo "Killing process \033[036m${TEMP_SERVER_PID}\033[0m"
     kill -9 $TEMP_SERVER_PID
-    sleep 6
+    sleep 1
+    wait $TEMP_SERVER_PID 2>/dev/null
     apt-get -y remove busybox
     apt-get -y purge busybox
 fi
 if [[ -d /tmp/lap-installer ]]; then
     rm -rf /tmp/lap-installer
 fi
+
+# ────────────────────────────────────────────────────────────────────────────────
+F_LINE
+# ────────────────────────────────────────────────────────────────────────────────
 
 exit 0
