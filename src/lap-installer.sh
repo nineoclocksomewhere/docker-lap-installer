@@ -993,9 +993,11 @@ if [[ $TEMP_SERVER_PID -gt 0 ]]; then
     echo "Killing process \033[036m${TEMP_SERVER_PID}\033[0m"
     kill -9 $TEMP_SERVER_PID
     sleep 6
+    apt-get -y remove busybox
+    apt-get -y purge busybox
 fi
 if [[ -d /tmp/lap-installer ]]; then
-    (sleep 6 && rm -rf /tmp/lap-installer) &
+    rm -rf /tmp/lap-installer
 fi
 
 exit 0
