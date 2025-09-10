@@ -149,6 +149,7 @@ fi
 if [[ -d /etc/apt/sources.list.d && $(ls -1 /etc/apt/sources.list.d/* | wc -l) -gt 0 ]]; then
     cat /etc/apt/sources.list.d/* | egrep "^deb(\-)?"
 fi
+apt-get update
 echo -ne "\033[0m"
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -156,7 +157,10 @@ F_LINE
 # ────────────────────────────────────────────────────────────────────────────────
 
 # Serve maintenance page with busybox temporarily
-cat <<EOL > /tmp/lap-installer/boot.html
+[[ "$DOCKER_INSTALL_BUSYBOX" == "" ]] && export DOCKER_INSTALL_BUSYBOX="yes"
+F_LOG "DOCKER_INSTALL_BUSYBOX=${DOCKER_INSTALL_BUSYBOX}"
+if [[ "${DOCKER_INSTALL_BUSYBOX,,}" =~ ^(y|yes|1|true)$ ]]; then
+    cat <<EOL > /tmp/lap-installer/index.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -225,12 +229,11 @@ cat <<EOL > /tmp/lap-installer/boot.html
 </body>
 </html>
 EOL
-apt-get update
-apt-get -y install busybox
-busybox httpd -f -p 80 -h /tmp/lap-installer &
-TEMP_SERVER_PID=$!
-sleep 1
-apt-get -y upgrade
+    apt-get -y install busybox
+    busybox httpd -f -p 80 -h /tmp/lap-installer &
+    TEMP_SERVER_PID=$!
+    sleep 1
+fi
 
 # ────────────────────────────────────────────────────────────────────────────────
 F_LINE
@@ -418,7 +421,6 @@ if [[ $( php -m | grep 'memcached' | wc -l ) -eq 0 ]]; then
     # ref: https://github.com/php-memcached-dev/php-memcached/issues/408
     if [[ $V_PHP_MAJOR_VERSION -eq 7 ]]; then
         set -ex \
-            && apt-get update \
             && DEBIAN_FRONTEND=noninteractive apt-get install -y libmemcached-dev \
             && rm -rf /var/lib/apt/lists/* \
             && MEMCACHED=/usr/src/php/ext/memcached \
@@ -810,7 +812,7 @@ F_LINE
 F_LOG "DOCKER_INSTALL_PYTHON3=${DOCKER_INSTALL_PYTHON3}"
 if [[ "${DOCKER_INSTALL_PYTHON3,,}" =~ ^(y|yes|1|true)$ ]]; then
     F_LOG "Installing Python3"
-    apt-get update && apt-get install -y python3
+    apt-get install -y python3
     python3 -V
 else
     F_LOG "Skipping Python3 install"
@@ -825,7 +827,7 @@ F_LINE
 F_LOG "DOCKER_INSTALL_SLATE=${DOCKER_INSTALL_SLATE}"
 if [[ "${DOCKER_INSTALL_SLATE,,}" =~ ^(y|yes|1|true)$ ]]; then
     F_LOG "Installing Slate"
-    apt-get update -y && apt-get install -y ruby ruby-dev build-essential libffi-dev zlib1g-dev liblzma-dev nodejs patch bundler
+    apt-get install -y ruby ruby-dev build-essential libffi-dev zlib1g-dev liblzma-dev nodejs patch bundler
     if [[ -d /slate ]]; then
         echo "Removing old /slate directory"
         rm -rf /slate
