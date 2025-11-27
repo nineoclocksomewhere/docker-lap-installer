@@ -259,9 +259,9 @@ F_LINE
 # User configuration - Part 1/2
 F_LOG "Checking user configuration (Part 1/2)"
 V_GID="${PGID:-1000}"
-V_GROUP="${DOCKER_GROUP_NAME:-docker}"
+V_GROUP="${DOCKER_OWNER_GROUP:-docker}"
 V_UID="${PUID:-1000}"
-V_USER="${DOCKER_USER_NAME:-docker}"
+V_USER="${DOCKER_OWNER_USER:-docker}"
 V_SECRET="${DOCKER_USER_SECRET:-secret}"
 if [[ $( getent group $V_GROUP | wc -l ) -eq 0 ]]; then
     F_LOG "Creating group ${V_GROUP} with GID ${V_GID}"
@@ -670,7 +670,7 @@ F_LOG "Showing id of user $V_USER"
 id -u "$V_USER"
 F_LOG "Showing contents of /home/$V_USER"
 ls -la /home/$V_USER
-V_USER_PATH=$( su - docker -c ". ~/.bashrc; echo \$PATH" )
+V_USER_PATH=$( su - "$V_USER" -c ". ~/.bashrc; echo \$PATH" )
 F_LOG "${V_USER}'s \$PATH is /home/${V_USER_PATH}"
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -834,8 +834,8 @@ if [[ "${DOCKER_INSTALL_SLATE,,}" =~ ^(y|yes|1|true)$ ]]; then
     fi
     mkdir /slate
     chmod 0775 /slate
-    chown docker:docker /slate
-    su -c "git clone git@github.com:slatedocs/slate.git /slate/" docker
+    chown "$V_USER":"$V_USER" /slate
+    su -c "git clone git@github.com:slatedocs/slate.git /slate/" "$V_USER"
     if [[ -d /slate/.git ]]; then
         rm -rf /slate/.git
     fi
@@ -844,8 +844,8 @@ if [[ "${DOCKER_INSTALL_SLATE,,}" =~ ^(y|yes|1|true)$ ]]; then
     fi
     V_PWD=$( pwd )
     cd /slate
-    su -c "bundle config set --local path 'vendor/bundle'" docker
-    su -c "bundle install" docker
+    su -c "bundle config set --local path 'vendor/bundle'" "$V_USER"
+    su -c "bundle install" "$V_USER"
     echo '#!/usr/bin/env bash' > /usr/local/bin/slate
     echo 'CUSTOM_SOURCE="$1"' >> /usr/local/bin/slate
     echo 'if [[ ! -d "$CUSTOM_SOURCE" ]]; then' >> /usr/local/bin/slate
@@ -895,7 +895,7 @@ if [[ "${DOCKER_INSTALL_LARAVEL,,}" =~ ^(y|yes|1|true)$ ]]; then
         V_LARAVEL_BIN_CONFIG="/home/${V_USER}/.config/composer/vendor/laravel/installer/bin/laravel"
         if [[ ! -f "$V_LARAVEL_BIN_COMPOSER" && ! -f "$V_LARAVEL_BIN_CONFIG" ]]; then
             F_LOG "\nRunning Composer require for user ${V_USER}"
-            su - docker -c ". /home/${V_USER}/.bashrc; composer global require laravel/installer"
+            su - "$V_USER" -c ". /home/${V_USER}/.bashrc; composer global require laravel/installer"
             F_LOG "Composer require ended\n"
             if [[ ! -f "$V_LARAVEL_BIN_COMPOSER" && ! -f "$V_LARAVEL_BIN_CONFIG" ]]; then
                 F_LOG "Error: installing the laravel installer failed, ${V_LARAVEL_BIN_COMPOSER} and ${V_LARAVEL_BIN_CONFIG} not found"
