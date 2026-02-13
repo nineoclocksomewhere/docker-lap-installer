@@ -598,6 +598,23 @@ fi
 F_LINE
 # ────────────────────────────────────────────────────────────────────────────────
 
+if [[ "$DOCKER_INSTALL_PHP_PCNTL" == "" ]]; then
+    export DOCKER_INSTALL_PHP_PCNTL="yes"
+fi
+F_LOG "DOCKER_INSTALL_PHP_PCNTL=${DOCKER_INSTALL_PHP_PCNTL}"
+if [[ "${DOCKER_INSTALL_PHP_PCNTL,,}" =~ ^(y|yes|1|true)$ ]]; then
+    if [[ $( php -m | grep 'pcntl' | wc -l ) -eq 0 ]]; then
+        F_LOG "Installing PHP extension pcntl"
+        docker-php-ext-install -j$(nproc) pcntl
+    else
+        F_LOG "PHP extension pcntl already installed"
+    fi
+fi
+
+# ────────────────────────────────────────────────────────────────────────────────
+F_LINE
+# ────────────────────────────────────────────────────────────────────────────────
+
 if [[ "$DOCKER_INSTALL_PHP_SOAP" == "" ]]; then
     export DOCKER_INSTALL_PHP_SOAP="no"
 fi
