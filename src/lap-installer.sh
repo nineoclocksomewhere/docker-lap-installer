@@ -860,22 +860,22 @@ EOL
     if [[ "${DOCKER_INSTALL_SUPERVISOR,,}" =~ ^(y|yes|1|true)$ ]]; then
         F_LOG "Installing Supervisor"
         apt-get install -y supervisor
-        if [[ ! -d /etc/supervisord ]]; then
-            F_LOG "Creating Supervisor configuration directory /etc/supervisord"
-            mkdir -p /etc/supervisord
+        if [[ ! -d /etc/supervisor ]]; then
+            F_LOG "Creating Supervisor configuration directory /etc/supervisor"
+            mkdir -p /etc/supervisor
         fi
-        if [[ ! -d /etc/supervisord/conf.d ]]; then
-            F_LOG "Creating Supervisor configuration directory /etc/supervisord/conf.d"
-            mkdir -p /etc/supervisord/conf.d
+        if [[ ! -d /etc/supervisor/conf.d ]]; then
+            F_LOG "Creating Supervisor configuration directory /etc/supervisor/conf.d"
+            mkdir -p /etc/supervisor/conf.d
         fi
-        if [[ ! -f /etc/supervisord/supervisord.conf ]]; then
-            F_LOG "Creating Supervisor configuration file /etc/supervisord/supervisord.conf"
-            echo_supervisord_conf > /etc/supervisord/supervisord.conf
-            echo "" >> /etc/supervisord/supervisord.conf
-            echo "[include]" >> /etc/supervisord/supervisord.conf
-            echo "files = /etc/supervisord/conf.d/*.conf" >> /etc/supervisord/supervisord.conf
+        if [[ ! -f /etc/supervisor/supervisord.conf ]]; then
+            F_LOG "Creating Supervisor configuration file /etc/supervisor/supervisord.conf"
+            echo_supervisord_conf > /etc/supervisor/supervisord.conf
+            echo "" >> /etc/supervisor/supervisord.conf
+            echo "[include]" >> /etc/supervisor/supervisord.conf
+            echo "files = /etc/supervisor/conf.d/*.conf" >> /etc/supervisor/supervisord.conf
         fi
-        echo -e "\n\033[031mIMPORTANT: remember to start the supervisor daemon with command: supervisord -c /etc/supervisord/supervisord.conf\033[0m\n"
+        echo -e "\n\033[031mIMPORTANT: remember to start the supervisor daemon with command: supervisord -c /etc/supervisor/supervisord.conf\033[0m\n"
     else
         F_LOG "Skipping Supervisor install"
     fi
@@ -1070,16 +1070,6 @@ EOL
     F_LINE
     # ────────────────────────────────────────────────────────────────────────────────
 
-fi
-
-# Supervisor start
-[[ "$DOCKER_INSTALL_SUPERVISOR" == "" ]] && export DOCKER_INSTALL_SUPERVISOR="no"
-if [[ "${DOCKER_INSTALL_SUPERVISOR,,}" =~ ^(y|yes|1|true)$ ]]; then
-    F_LOG "Starting Supervisor daemon"
-    supervisord -c /etc/supervisord.conf
-    # ────────────────────────────────────────────────────────────────────────────────
-    F_LINE
-    # ────────────────────────────────────────────────────────────────────────────────
 fi
 
 exit 0
