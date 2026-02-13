@@ -872,6 +872,9 @@ EOL
             F_LOG "Creating Supervisor configuration file /etc/supervisor/supervisord.conf"
             echo_supervisord_conf > /etc/supervisor/supervisord.conf
             echo "" >> /etc/supervisor/supervisord.conf
+            echo "[supervisord]" >> /etc/supervisor/supervisord.conf
+            echo "user=docker" >> /etc/supervisor/supervisord.conf
+            echo "" >> /etc/supervisor/supervisord.conf
             echo "[include]" >> /etc/supervisor/supervisord.conf
             echo "files = /etc/supervisor/conf.d/*.conf" >> /etc/supervisor/supervisord.conf
         fi
