@@ -244,14 +244,8 @@ EOL
     # ────────────────────────────────────────────────────────────────────────────────
 
     # Custom before installer script?
-    which lap-installer-before
-    if [[ $? -eq 0 ]]; then
-        F_LOG "Running installer before script"
-        bash lap-installer-before
-        if [[ ! $? -eq 0 ]]; then
-            F_LOG "Error: before installer failed, aborting"
-            exit 1
-        fi
+    if command -v lap-installer-before >/dev/null 2>&1; then
+        bash lap-installer-before || { F_LOG "Error: before installer failed, aborting"; exit 1; }
     else
         F_LOG "No installer before script"
     fi
@@ -304,7 +298,7 @@ EOL
         fi
     fi
 
-    apt-get install -y \
+    apt install --no-install-recommends -y \
         coreutils \
         libfreetype6-dev \
         libgd-dev \
@@ -345,7 +339,7 @@ EOL
     # Locales
     F_LOG "Installing and updating locales"
     # Install locales package
-    apt-get install -y locales
+    apt install --no-install-recommends -y locales
     # Uncomment locales for inclusion in generation
     if [[ -f /etc/locale.gen ]]; then
         sed -i 's/^# *\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen
@@ -368,7 +362,7 @@ EOL
     F_LOG "DOCKER_INSTALL_WKHTMLTOPDF=${DOCKER_INSTALL_WKHTMLTOPDF}"
     if [[ "${DOCKER_INSTALL_WKHTMLTOPDF,,}" =~ ^(y|yes|1|true)$ ]]; then
         F_LOG "Installing wkhtmltopdf"
-        apt-get install -y \
+        apt install --no-install-recommends -y \
             wkhtmltopdf
     else
         F_LOG "Skipping wkhtmltopdf install"
@@ -383,7 +377,7 @@ EOL
     F_LOG "DOCKER_INSTALL_IMAGE_OPTIMIZERS=${DOCKER_INSTALL_IMAGE_OPTIMIZERS}"
     if [[ "${DOCKER_INSTALL_IMAGE_OPTIMIZERS,,}" =~ ^(y|yes|1|true)$ ]]; then
         F_LOG "Installing Image Optimizers"
-        apt-get install -y \
+        apt install --no-install-recommends -y \
             jpegoptim \
             gifsicle \
             optipng \
@@ -426,7 +420,7 @@ EOL
         # ref: https://github.com/php-memcached-dev/php-memcached/issues/408
         if [[ $V_PHP_MAJOR_VERSION -eq 7 ]]; then
             set -ex \
-                && DEBIAN_FRONTEND=noninteractive apt-get install -y libmemcached-dev \
+                && DEBIAN_FRONTEND=noninteractive apt install --no-install-recommends -y libmemcached-dev \
                 && rm -rf /var/lib/apt/lists/* \
                 && MEMCACHED=/usr/src/php/ext/memcached \
                 && mkdir -p "$MEMCACHED" \
@@ -490,7 +484,7 @@ EOL
             F_LOG "Updating packages"
             apt update
             F_LOG "Installing imagemagick packages"
-            apt install imagemagick libmagickwand-dev gcc make -y
+            apt install --no-install-recommends -y imagemagick libmagickwand-dev gcc make
             (
                 cd /var/tmp
                 F_LOG "Cloning imagick source repository"
@@ -703,68 +697,79 @@ EOL
     [[ "$DOCKER_INSTALL_COMPOSER" == "" ]] && export DOCKER_INSTALL_COMPOSER="yes"
     F_LOG "DOCKER_INSTALL_COMPOSER=${DOCKER_INSTALL_COMPOSER}"
     if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
-        F_LOG "Installing Composer"
-        F_LOG "Checking if Composer is installed"
-        if [[ -f /usr/local/bin/composer ]]; then
-            F_LOG "Installed"
-        else
-            F_LOG "Not installed, installing now"
+        DOCKER_INSTALL_COMPOSER="${DOCKER_COMPOSER_VERSION:-2.1.7}"
+    fi
+    if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(\.[0-9]+\.[0-9]+\.[0-9]+)?$ ]]; then
+        IFS="," read -ra COMPOSER_VERSIONS <<< "$DOCKER_INSTALL_COMPOSER"
 
-            # Prepare a composer installer directory
-            mkdir -p /tmp/composer-installer && cd /tmp/composer-installer
+        for COMPOSER_VERSION in "${COMPOSER_VERSIONS[@]}"; do
+            F_LOG "Installing Composer version ${COMPOSER_VERSION}"
+            F_LOG "Checking if Composer version ${COMPOSER_VERSION} is installed"
 
-            # https://getcomposer.org/download/
-            V_COMPOSER_HASH=$( curl -s https://composer.github.io/installer.sig )
-            php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-            php -r "if (hash_file('sha384', 'composer-setup.php') === '${V_COMPOSER_HASH}') { echo \"Composer installer verified\".PHP_EOL; } else { echo \"Composer installer corrupt\".PHP_EOL; unlink('composer-setup.php'); if (file_exists('composer-setup.php')) { echo \"Removing \".realpath('composer-setup.php').\" failed\".PHP_EOL; } }"
+            COMPOSER_BIN="/usr/local/bin/composer-${COMPOSER_VERSION}"
+            if [[ -f "$COMPOSER_BIN" ]]; then
+                F_LOG "Installed"
+            else
+                F_LOG "Not installed, installing now"
 
-            if [[ -f "composer-setup.php" ]]; then
-                F_LOG "Composer installer saved as $( realpath 'composer-setup.php' )"
-                F_LOG "Running composer-setup.php"
+                # Prepare a composer installer directory
+                mkdir -p /tmp/composer-installer-$COMPOSER_VERSION && cd /tmp/composer-installer-$COMPOSER_VERSION  
 
-                F_LOG "For available Composer versions, check: https://github.com/composer/composer/releases"
-                if [[ "$DOCKER_COMPOSER_VERSION" != "" ]]; then
-                    F_LOG "Installing Composer version $DOCKER_COMPOSER_VERSION"
-                    php composer-setup.php --version="$DOCKER_COMPOSER_VERSION"
+                # https://getcomposer.org/download/
+                V_COMPOSER_HASH=$( curl -s https://composer.github.io/installer.sig )
+                php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+                php -r "if (hash_file('sha384', 'composer-setup.php') === '${V_COMPOSER_HASH}') { echo \"Composer installer verified\".PHP_EOL; } else { echo \"Composer installer corrupt\".PHP_EOL; unlink('composer-setup.php'); if (file_exists('composer-setup.php')) { echo \"Removing \".realpath('composer-setup.php').\" failed\".PHP_EOL; } }"
+
+                if [[ -f "composer-setup.php" ]]; then
+                    F_LOG "Composer installer saved as $( realpath 'composer-setup.php' )"
+                    F_LOG "Running composer-setup.php"
+
+                    F_LOG "For available Composer versions, check: https://github.com/composer/composer/releases"
+                    if [[ "$COMPOSER_VERSION" != "" ]]; then
+                        F_LOG "Installing Composer version $COMPOSER_VERSION"
+                        php composer-setup.php --version="$COMPOSER_VERSION"
+                    else
+                        F_LOG "Installing latest Composer version"
+                        php composer-setup.php
+                    fi
+
+                    if [[ ! $? -eq 0 ]]; then
+                        F_LOG "Error: installing Composer failed, aborting"
+                        exit 1
+                    fi
+
+                    F_LOG "Removing composer-setup.php"
+                    php -r "unlink('composer-setup.php'); if (file_exists('composer-setup.php')) { echo \"Removing \".realpath('composer-setup.php').\" failed\".PHP_EOL; }"
+
+                    if [[ -f composer.phar ]]; then
+                        chmod +x composer.phar
+                        if [[ ! -d /usr/local/bin ]]; then
+                            mkdir -p /usr/local/bin
+                        fi
+                        F_LOG "Moving $( realpath composer.phar ) to /usr/local/bin/composer-${COMPOSER_VERSION}"
+                        mv -f composer.phar /usr/local/bin/composer-${COMPOSER_VERSION}
+                        F_LOG "Cleaning up the composer installer"
+                        cd && rm -rf /tmp/composer-installer-${COMPOSER_VERSION}
+                    else
+                        F_LOG "Error: composer.phar not found, aborting"
+                        exit 1
+                    fi
                 else
-                    F_LOG "Installing latest Composer version"
-                    php composer-setup.php
-                fi
-
-                if [[ ! $? -eq 0 ]]; then
                     F_LOG "Error: installing Composer failed, aborting"
                     exit 1
                 fi
 
-                F_LOG "Removing composer-setup.php"
-                php -r "unlink('composer-setup.php'); if (file_exists('composer-setup.php')) { echo \"Removing \".realpath('composer-setup.php').\" failed\".PHP_EOL; }"
-
-                if [[ -f composer.phar ]]; then
-                    chmod +x composer.phar
-                    if [[ ! -d /usr/local/bin ]]; then
-                        mkdir -p /usr/local/bin
-                    fi
-                    F_LOG "Moving $( realpath composer.phar ) to /usr/local/bin/composer"
-                    mv -f composer.phar /usr/local/bin/composer
-                    F_LOG "Cleaning up the composer installer"
-                    cd && rm -rf /tmp/composer-installer
+                if [[ -f "/usr/local/bin/composer-${COMPOSER_VERSION}" ]]; then
+                    F_LOG "Composer is now installed!"
+                    /usr/local/bin/composer-${COMPOSER_VERSION} --version
                 else
-                    F_LOG "Error: composer.phar not found, aborting"
+                    F_LOG "Error: installing Composer failed, aborting"
                     exit 1
                 fi
-            else
-                F_LOG "Error: installing Composer failed, aborting"
-                exit 1
             fi
-
-            if [[ -f /usr/local/bin/composer ]]; then
-                F_LOG "Composer is now installed!"
-                /usr/local/bin/composer --version
-            else
-                F_LOG "Error: installing Composer failed, aborting"
-                exit 1
-            fi
-        fi
+        done
+        F_LOG "Creating a composer symlink to the latest version"
+        ln -s /usr/local/bin/composer-${COMPOSER_VERSIONS[-1]} /usr/local/bin/composer
     else
         F_LOG "Skipping Composer install"
     fi
@@ -845,7 +850,7 @@ EOL
     F_LOG "DOCKER_INSTALL_PYTHON3=${DOCKER_INSTALL_PYTHON3}"
     if [[ "${DOCKER_INSTALL_PYTHON3,,}" =~ ^(y|yes|1|true)$ ]]; then
         F_LOG "Installing Python3"
-        apt-get install -y python3
+        apt install --no-install-recommends -y python3
         python3 -V
     else
         F_LOG "Skipping Python3 install"
@@ -859,7 +864,7 @@ EOL
     F_LOG "DOCKER_INSTALL_SUPERVISOR=${DOCKER_INSTALL_SUPERVISOR}"
     if [[ "${DOCKER_INSTALL_SUPERVISOR,,}" =~ ^(y|yes|1|true)$ ]]; then
         F_LOG "Installing Supervisor"
-        apt-get install -y supervisor
+        apt install --no-install-recommends -y supervisor
         if [[ ! -d /etc/supervisor ]]; then
             F_LOG "Creating Supervisor configuration directory /etc/supervisor"
             mkdir -p /etc/supervisor
@@ -892,7 +897,7 @@ EOL
     F_LOG "DOCKER_INSTALL_SLATE=${DOCKER_INSTALL_SLATE}"
     if [[ "${DOCKER_INSTALL_SLATE,,}" =~ ^(y|yes|1|true)$ ]]; then
         F_LOG "Installing Slate"
-        apt-get install -y ruby ruby-dev build-essential libffi-dev zlib1g-dev liblzma-dev nodejs patch bundler
+        apt install --no-install-recommends -y ruby ruby-dev build-essential libffi-dev zlib1g-dev liblzma-dev nodejs patch bundler
         if [[ -d /slate ]]; then
             echo "Removing old /slate directory"
             rm -rf /slate
@@ -1014,13 +1019,8 @@ EOL
     # ────────────────────────────────────────────────────────────────────────────────
 
     # Custom after installer script?
-    which lap-installer-after
-    if [[ $? -eq 0 ]]; then
-        bash lap-installer-after
-        if [[ ! $? -eq 0 ]]; then
-            F_LOG "Error: after installer failed, aborting"
-            exit 1
-        fi
+    if command -v lap-installer-after >/dev/null 2>&1; then
+        bash lap-installer-after || { F_LOG "Error: after installer failed, aborting"; exit 1; }
     else
         F_LOG "No installer after script"
     fi
@@ -1056,14 +1056,25 @@ EOL
 
     F_LOG "Stopping the busybox server"
     if [[ $TEMP_SERVER_PID -gt 0 ]]; then
+
         ps ax | grep "$TEMP_SERVER_PID"
         ps ax | grep busybox
         echo "Killing process \033[036m${TEMP_SERVER_PID}\033[0m"
-        kill -9 $TEMP_SERVER_PID
-        sleep 1
-        wait $TEMP_SERVER_PID 2>/dev/null
-        apt-get -y remove busybox
-        apt-get -y purge busybox
+
+        kill $TEMP_SERVER_PID 2>/dev/null || true   # SIGTERM
+        sleep 2
+
+        # wait but ignore exit code
+        wait $TEMP_SERVER_PID 2>/dev/null || true
+
+        # fallback if still alive
+        if ps -p $TEMP_SERVER_PID > /dev/null 2>&1; then
+            kill -9 $TEMP_SERVER_PID
+            wait $TEMP_SERVER_PID 2>/dev/null || true
+        fi
+
+        apt-get -y remove busybox || true
+        apt-get -y purge busybox || true
     fi
     if [[ -d /tmp/lap-installer ]]; then
         rm -rf /tmp/lap-installer
