@@ -699,7 +699,8 @@ EOL
     if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^(y|yes|1|true)$ ]]; then
         DOCKER_INSTALL_COMPOSER="${DOCKER_COMPOSER_VERSION:-2.1.7}"
     fi
-    if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(\.[0-9]+\.[0-9]+\.[0-9]+)?$ ]]; then
+    if [[ "${DOCKER_INSTALL_COMPOSER,,}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(\,[0-9]+\.[0-9]+\.[0-9]+)*$ ]]; then
+
         IFS="," read -ra COMPOSER_VERSIONS <<< "$DOCKER_INSTALL_COMPOSER"
 
         for COMPOSER_VERSION in "${COMPOSER_VERSIONS[@]}"; do
@@ -755,21 +756,22 @@ EOL
                         exit 1
                     fi
                 else
-                    F_LOG "Error: installing Composer failed, aborting"
+                    F_LOG "Error: installing Composer v${COMPOSER_VERSION} failed, aborting"
                     exit 1
                 fi
 
                 if [[ -f "/usr/local/bin/composer-${COMPOSER_VERSION}" ]]; then
-                    F_LOG "Composer is now installed!"
+                    F_LOG "Composer v${COMPOSER_VERSION} is now installed!"
                     /usr/local/bin/composer-${COMPOSER_VERSION} --version
                 else
-                    F_LOG "Error: installing Composer failed, aborting"
+                    F_LOG "Error: installing Composer v${COMPOSER_VERSION} failed, aborting"
                     exit 1
                 fi
             fi
         done
         F_LOG "Creating a composer symlink to the latest version"
         ln -s /usr/local/bin/composer-${COMPOSER_VERSIONS[-1]} /usr/local/bin/composer
+        ls -la /usr/local/bin/composer*
     else
         F_LOG "Skipping Composer install"
     fi
