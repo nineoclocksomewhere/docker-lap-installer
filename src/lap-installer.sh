@@ -1069,6 +1069,9 @@ if [[ -f /usr/local/bin/booted ]]; then
     /usr/local/bin/booted
 fi
 
+apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false
+rm -rf /var/lib/apt/lists/*
+
 echo -e "\033[95m                                                                            \033[0m"
 echo -e "\033[95m                                      #########                             \033[0m"
 echo -e "\033[95m                                     ##############                         \033[0m"
