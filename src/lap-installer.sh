@@ -1123,8 +1123,7 @@ set -e
 pre-start
 
 if [[ -f /usr/local/bin/booted ]]; then
-    F_LOG "Starting booted script"
-    /usr/local/bin/booted
+    booted
 fi
 
 apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false
