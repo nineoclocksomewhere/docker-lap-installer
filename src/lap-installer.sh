@@ -1020,6 +1020,102 @@ EOL
     F_LINE
     # ────────────────────────────────────────────────────────────────────────────────
 
+    # Create the start script
+    F_LOG "Creating the start script"
+    if [[ -f /usr/local/bin/start ]]; then
+        F_LOG "Removing old start script"
+        rm -rf /usr/local/bin/start
+    fi
+    # /usr/local/bin/composer-use
+    cat <<EOL > /usr/local/bin/composer-use
+#!/usr/bin/env bash
+set -e
+
+# Composer version switcher
+if [[ "\${DOCKER_COMPOSER_VERSION,,}" =~ ^[0-9]+\.[0-9]+\.[0-9]+\$ ]]; then
+    if [[ -f /usr/local/bin/composer-\${DOCKER_COMPOSER_VERSION} ]]; then
+        F_LOG "Starting the application with composer version \${DOCKER_COMPOSER_VERSION}"
+        if [[ -f /usr/local/bin/composer ]]; then
+            F_LOG "Removing old composer symlink"
+            rm -rf /usr/local/bin/composer
+        fi
+        ln -s /usr/local/bin/composer-\${DOCKER_COMPOSER_VERSION} /usr/local/bin/composer
+        composer --version
+    fi
+fi
+EOL
+    chmod +x /usr/local/bin/composer-use
+    # /usr/local/bin/node-use
+    # @todo: create the node-use script using DOCKER_NODE_VERSION in combination with nvm install and use
+    # ...
+    # /usr/local/bin/pre-start
+    cat <<EOL > /usr/local/bin/pre-start
+#!/usr/bin/env bash
+set -e
+
+composer-use
+# node-use
+EOL
+    chmod +x /usr/local/bin/pre-start
+    # /usr/local/bin/start
+    cat <<EOL > /usr/local/bin/start
+#!/usr/bin/env bash
+set -e
+
+pre-start
+
+if [[ -f /usr/local/bin/booted ]]; then
+    F_LOG "Starting booted script"
+    /usr/local/bin/booted
+fi
+
+echo -e "\033[95m                                                                            \033[0m"
+echo -e "\033[95m                                      #########                             \033[0m"
+echo -e "\033[95m                                     ##############                         \033[0m"
+echo -e "\033[95m                                     #################                      \033[0m"
+echo -e "\033[95m                                     ####################                   \033[0m"
+echo -e "\033[95m                                     ######################                 \033[0m"
+echo -e "\033[95m                                     ########################               \033[0m"
+echo -e "\033[95m                                      ########################              \033[0m"
+echo -e "\033[95m                                             ##################             \033[0m"
+echo -e "\033[95m                                                #################           \033[0m"
+echo -e "\033[95m                                                  ################          \033[0m"
+echo -e "\033[95m                                                    ##############          \033[0m"
+echo -e "\033[95m                                                     ##############         \033[0m"
+echo -e "\033[95m                                                      #############         \033[0m"
+echo -e "\033[95m                                                       #############        \033[0m"
+echo -e "\033[95m                                                        ############        \033[0m"
+echo -e "\033[95m                                                        ############        \033[0m"
+echo -e "\033[95m        ############                                    ############        \033[0m"
+echo -e "\033[95m        ############                                    ############        \033[0m"
+echo -e "\033[95m        ############                                    ############        \033[0m"
+echo -e "\033[95m        #############                                  #############        \033[0m"
+echo -e "\033[95m        #############                                  #############        \033[0m"
+echo -e "\033[95m         #############                               ##############         \033[0m"
+echo -e "\033[95m          ##############                            ##############          \033[0m"
+echo -e "\033[95m          ###############                         ################          \033[0m"
+echo -e "\033[95m           #################                    #################           \033[0m"
+echo -e "\033[95m            ##################               ###################            \033[0m"
+echo -e "\033[95m             #################################################              \033[0m"
+echo -e "\033[95m               ##############################################               \033[0m"
+echo -e "\033[95m                 ##########################################                 \033[0m"
+echo -e "\033[95m                   ######################################                   \033[0m"
+echo -e "\033[95m                     #################################                      \033[0m"
+echo -e "\033[95m                        ############################                        \033[0m"
+echo -e "\033[95m                            ####################                            \033[0m"
+echo -e "\033[95m                                                                            \033[0m"
+echo -e "\033[95m                                                                            \033[0m"
+echo -e "\033[95m                        nineoclocksomewhe.re - 2026                         \033[0m"
+echo -e "\033[95m                                                                            \033[0m"
+
+apache2-foreground
+EOL
+    chmod +x /usr/local/bin/start
+
+    # ────────────────────────────────────────────────────────────────────────────────
+    F_LINE
+    # ────────────────────────────────────────────────────────────────────────────────
+
     # Custom after installer script?
     if command -v lap-installer-after >/dev/null 2>&1; then
         bash lap-installer-after || { F_LOG "Error: after installer failed, aborting"; exit 1; }
