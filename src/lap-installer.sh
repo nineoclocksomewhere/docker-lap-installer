@@ -1048,59 +1048,55 @@ EOL
     chmod +x /usr/local/bin/composer-use
 
     # /usr/local/bin/node-use
-cat <<'EOL' > /usr/local/bin/node-use
+    cat <<'EOL' > /usr/local/bin/node-use
 #!/usr/bin/env bash
 set -e
 
-# Determine NodeJS version
-# Prio 1: if really forced to a fexed version with DOCKER_FORCE_NODE_VERSION, use it
-NODE_VERSION="${DOCKER_FORCE_NODE_VERSION}"
-# Prio 2: if a .nvmrc file is found in the project, use it
-if [[ "$NODE_VERSION" = "" && -f /var/www/html/.nvmrc ]]; then
-    NODE_VERSION="$(cat /var/www/html/.nvmrc | tr -d '[:space:]')"
+NODE_VERSION="${DOCKER_FORCE_NODE_VERSION:-}"
+if [[ -z "$NODE_VERSION" && -f /var/www/html/.nvmrc ]]; then
+    NODE_VERSION="$(< /var/www/html/.nvmrc tr -d '[:space:]')"
 fi
-# Prio 3: if a version is set with DOCKER_NODE_VERSION, use it
-if [[ "$NODE_VERSION" = "" ]]; then
-    NODE_VERSION="${DOCKER_NODE_VERSION}"
+if [[ -z "$NODE_VERSION" ]]; then
+    NODE_VERSION="${DOCKER_NODE_VERSION:-}"
 fi
-# Prio 4: use the default(/fallback) version
-if [[ "$NODE_VERSION" = "" ]]; then
-    NODE_VERSION="lts/hydrogen"
-fi
+NODE_VERSION="${NODE_VERSION:-lts/hydrogen}"
 
 echo "Using NodeJS version: $NODE_VERSION"
 
-# Users to configure
 USERS=("docker")
 
 for V_NODE_USER in "${USERS[@]}"; do
-    HOME_DIR=$(eval echo "~$V_NODE_USER")
-    NVM_DIR="$HOME_DIR/.nvm"
+    su -l $V_NODE_USER -c "
+        set -e
+        export HOME=$(eval echo "~$V_NODE_USER")
+        NVM_DIR=\"\$HOME/.nvm\"
 
-    # Ensure NVM is installed
-    if [[ ! -d "$NVM_DIR" || ! -s "$NVM_DIR/nvm.sh" ]]; then
-        echo "Installing nvm for user $V_NODE_USER"
-        mkdir -p "$NVM_DIR"
-        curl -s -o- https://raw.githubusercontent.com/creationix/nvm/v0.39.3/install.sh | bash
-    fi
+        # Install nvm if missing
+        if [[ ! -s \"\$NVM_DIR/nvm.sh\" ]]; then
+            echo 'Installing nvm for user $V_NODE_USER'
+            curl -s -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.6/install.sh | bash
+        fi
 
-    # Load NVM
-    export NVM_DIR="$NVM_DIR"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+        # Source nvm.sh
+        if [[ -s \"\$NVM_DIR/nvm.sh\" ]]; then
+            . \"\$NVM_DIR/nvm.sh\"
+        else
+            echo 'ERROR: nvm.sh not found for user $V_NODE_USER' >&2
+            exit 1
+        fi
 
-    # Install Node version if missing
-    if ! su $V_NODE_USER -p -c "nvm ls $NODE_VERSION" >/dev/null 2>&1; then
-        echo "Installing NodeJS version $NODE_VERSION for $V_NODE_USER"
-        su $V_NODE_USER -p -c "nvm install $NODE_VERSION"
-    fi
+        # Install Node version if missing
+        if ! nvm ls \"$NODE_VERSION\" >/dev/null 2>&1; then
+            echo \"Installing NodeJS $NODE_VERSION for $V_NODE_USER\"
+            nvm install \"$NODE_VERSION\"
+        fi
 
-    # Set default and use
-    echo "Setting NodeJS $NODE_VERSION as default for $V_NODE_USER"
-    su $V_NODE_USER -p -c "nvm alias default $NODE_VERSION && nvm use default"
+        nvm alias default \"$NODE_VERSION\"
+        nvm use default
 
-    # Update npm globally
-    su $V_NODE_USER -p -c "npm_config_engine_strict=false npm install -g npm@latest"
+        # Disabled
+        # npm_config_engine_strict=false npm install -g npm@latest
+    "
 done
 EOL
     chmod +x /usr/local/bin/node-use
