@@ -1035,9 +1035,9 @@ set -e
 # Composer version switcher
 if [[ "\${DOCKER_COMPOSER_VERSION,,}" =~ ^[0-9]+\.[0-9]+\.[0-9]+\$ ]]; then
     if [[ -f /usr/local/bin/composer-\${DOCKER_COMPOSER_VERSION} ]]; then
-        F_LOG "Starting the application with composer version \${DOCKER_COMPOSER_VERSION}"
+        echo "Starting the application with composer version \${DOCKER_COMPOSER_VERSION}"
         if [[ -f /usr/local/bin/composer ]]; then
-            F_LOG "Removing old composer symlink"
+            echo "Removing old composer symlink"
             rm -rf /usr/local/bin/composer
         fi
         ln -s /usr/local/bin/composer-\${DOCKER_COMPOSER_VERSION} /usr/local/bin/composer
