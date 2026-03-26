@@ -6,7 +6,7 @@ ARG PGID=1000
 ARG APACHE_RUN_USER=docker
 ARG APACHE_RUN_GROUP=docker
 
-ARG DOCKER_INSTALL_COMPOSER="2.1.7,2.2.25"
+ARG DOCKER_INSTALL_COMPOSER=yes
 ARG DOCKER_INSTALL_IMAGE_OPTIMIZERS=yes
 ARG DOCKER_INSTALL_LARAVEL=yes
 ARG DOCKER_INSTALL_NODEJS=yes
@@ -52,6 +52,10 @@ ENV TZ=$TZ \
     DOCKER_INSTALL_SUPERVISOR=$DOCKER_INSTALL_SUPERVISOR
 
 COPY src/lap-installer.sh /tmp/lap-installer.sh
+COPY src/bin/composer-use.sh /usr/local/bin/composer-use
+COPY src/bin/node-use.sh /usr/local/bin/node-use
+COPY src/bin/pre-start.sh /usr/local/bin/pre-start
+COPY src/bin/start.sh /usr/local/bin/start
 
 RUN set -eux; \
     chmod +x /tmp/lap-installer.sh \

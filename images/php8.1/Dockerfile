@@ -1,4 +1,4 @@
-FROM php:8.5.4-apache-trixie
+FROM php:8.1-apache-bullseye
 
 ARG TZ=Europe/Brussels
 ARG PUID=1000
